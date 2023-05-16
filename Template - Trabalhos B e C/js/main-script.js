@@ -24,9 +24,7 @@ function createScene() {
 
 
     move = false;
-    
-    moving_obj.push(createChess(0, 0, 0, 15));
-    // moving_obj.push(createTable(0, 0, 0, 1));
+    moving_obj.push(createRobot(0, 0, 0, 15));
 }
 
 //////////////////////
@@ -52,44 +50,6 @@ function createCamera() {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
-function addTableLeg(obj, x, y, z, size) {
-    'use strict';
-
-    geometry = new THREE.BoxGeometry(2 * size, 6 * size, 2 * size);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y - 3, z);
-    obj.add(mesh);
-}
-
-function addTableTop(obj, x, y, z, size) {
-    'use strict';
-    geometry = new THREE.BoxGeometry(60 * size, 2 * size, 20 * size);
-    // (width, height, depth)
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
-}
-
-function createTable(x, y, z, size) {
-    'use strict';
-
-    var table = new THREE.Object3D();
-
-    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-
-    addTableTop(table, 0, 0, 0, size);
-    addTableLeg(table, -25, -1, -8, size);
-    addTableLeg(table, -25, -1, 8, size);
-    addTableLeg(table, 25, -1, 8, size);
-    addTableLeg(table, 25, -1, -8, size);
-
-    scene.add(table);
-
-    table.position.x = x;
-    table.position.y = y;
-    table.position.z = z;
-}
-
 function addBall(obj, x, y, z, size) {
     'use strict';
 
@@ -111,76 +71,12 @@ function addCube(obj, x, y, z, sizeX, sizeY, sizeZ) {
     
 }
 
-
-function addGrill(obj, x, y, z, size) {
-    'use strict';
-
-    // addBall(obj, x, y, z, size);
-    addCube(obj, x, y, z, size, size, size*2);
-}
-
-function addBumper(obj, x, y, z, size) {
-    'use strict';
-
-    // addBall(obj, x, y, z, size);
-    addCube(obj, x, y, z, size*3, size, size/10);
-}
-
-function addWindows(obj, x, y, z, size) {
-    'use strict';
-
-    // addBall(obj, x, y, z, size);
-    addCube(obj, x, y, z, size*3, size*2, size*2);
-
-}
-
-function addBack(obj, x, y, z, size) {
-    'use strict';
-
-    // addBall(obj, x, y, z, size);
-    addCube(obj, x, y, z, size, size*3, size);
-
-}
-
-function addArm(obj, x, y, z, size) {
-    'use strict';
-
-    addBall(obj, x, y, z, size);
-    addCube(obj, x, y, z+size, size, size, size*3);
-    addCube(obj, x, y+size*1.5, z, size, size*2, size);
-    
-}
-
-
-function createChess(x,y,z, size) {
-    'use strict';
-
-    var chess = new THREE.Object3D();
-
-    material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-
-    addBall(chess, x, y, z, size);
-    addGrill(chess, 0, 0, 0, size);
-    addBumper(chess, 0, 0, size+size/20, size)
-    addWindows(chess, 0, size*1.5, 0, size);
-    addBack(chess, 0, size, -size*1.5, size);
-
-    addArm(chess, size, 0, -size*1.5, size);
-    addArm(chess, -size, 0, -size*1.5, size);
-
-    chess.position.set(x, y, z);
-    
-    scene.add(chess);
-    return chess;
-}
-
 function createCone(x,y,z, size) {
     'use strict';
 
     var cone = new THREE.Object3D();
     cone.userData = { jumping: true, step: 0 };
 
-    material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
     geometry = new THREE.ConeGeometry(size, size, size);
     mesh = new THREE.Mesh(geometry, material);
 
@@ -192,6 +88,47 @@ function createCone(x,y,z, size) {
 
     scene.add(cone);
     return cone;
+}
+
+
+
+
+function addArm(obj, x, y, z, size) {
+    'use strict';
+
+    addBall(obj, x, y, z, size);                                            // center
+    addCube(obj, x, y+size*1.5, z, size, size*2, size);                     // upper arm
+    addCube(obj, x, y, z+size, size, size, size*3);                         // lower arm
+    
+}
+
+function addChest(obj, x, y, z, size) {
+
+    addBall(obj, x, y, z, size);                                            // center
+    addCube(obj, x, y, z, size, size, size*2);                              // base
+    addCube(obj, x, y, z+size+size/20, size*3, size, size/10)               // bumper
+    addCube(obj, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
+    addCube(obj, x, y+size, z-size*1.5, size, size*3, size);                // back
+    
+}
+
+function createRobot(x, y, z, size) {
+    'use strict';
+
+    var robot = new THREE.Object3D();
+
+    
+    material = new THREE.MeshBasicMaterial({ color: 0x880000, wireframe: true });
+    addChest(robot, x, y, z, size);
+    
+    material = new THREE.MeshBasicMaterial({ color: 0x660000, wireframe: true }); // TOFIX: wireframe not switching
+    addArm(robot, size, 0, -size*1.5, size);
+    addArm(robot, -size, 0, -size*1.5, size);
+
+    robot.position.set(x, y, z);
+
+    scene.add(robot);
+    return robot;
 }
 
 //////////////////////
