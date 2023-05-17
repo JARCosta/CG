@@ -24,7 +24,7 @@ function createScene() {
 
 
     move = false;
-    moving_obj.push(createRobot(0, 0, 0, 15));
+    moving_obj.push(createRobot(0, 0, 0, 10));
 }
 
 //////////////////////
@@ -50,7 +50,7 @@ function createCamera() {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
-function addBall(obj, x, y, z, size) {
+function addBall(obj, material, x, y, z, size) {
     'use strict';
 
     geometry = new THREE.SphereGeometry( size/5, 16, 16 );
@@ -60,7 +60,7 @@ function addBall(obj, x, y, z, size) {
     obj.add(mesh);
 }
 
-function addCube(obj, x, y, z, sizeX, sizeY, sizeZ) {
+function addCube(obj, material, x, y, z, sizeX, sizeY, sizeZ) {
     'use strict';
 
     geometry = new THREE.BoxGeometry( sizeX, sizeY, sizeZ );
@@ -96,19 +96,21 @@ function createCone(x,y,z, size) {
 function addArm(obj, x, y, z, size) {
     'use strict';
 
-    addBall(obj, x, y, z, size);                                            // center
-    addCube(obj, x, y+size*1.5, z, size, size*2, size);                     // upper arm
-    addCube(obj, x, y, z+size, size, size, size*3);                         // lower arm
+    var material  = new THREE.MeshBasicMaterial({ color: 0x660000, wireframe: true });
+    addBall(obj, material, x, y, z, size);                                            // center
+    addCube(obj, material, x, y+size*1.5, z, size, size*2, size);                     // upper arm
+    addCube(obj, material, x, y, z+size, size, size, size*3);                         // lower arm
     
 }
 
 function addChest(obj, x, y, z, size) {
 
-    addBall(obj, x, y, z, size);                                            // center
-    addCube(obj, x, y, z, size, size, size*2);                              // base
-    addCube(obj, x, y, z+size+size/20, size*3, size, size/10)               // bumper
-    addCube(obj, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
-    addCube(obj, x, y+size, z-size*1.5, size, size*3, size);                // back
+    var material = new THREE.MeshBasicMaterial({ color: 0x880000, wireframe: true });
+    addBall(obj, material, x, y, z, size);                                            // center
+    addCube(obj, material, x, y, z, size, size, size*2);                              // base
+    addCube(obj, material, x, y, z+size+size/20, size*3, size, size/10)               // bumper
+    addCube(obj, material, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
+    addCube(obj, material, x, y+size, z-size*1.5, size, size*3, size);                // back
     
 }
 
@@ -118,10 +120,8 @@ function createRobot(x, y, z, size) {
     var robot = new THREE.Object3D();
 
     
-    material = new THREE.MeshBasicMaterial({ color: 0x880000, wireframe: true });
     addChest(robot, x, y, z, size);
     
-    material = new THREE.MeshBasicMaterial({ color: 0x660000, wireframe: true }); // TOFIX: wireframe not switching
     addArm(robot, size, 0, -size*1.5, size);
     addArm(robot, -size, 0, -size*1.5, size);
 
@@ -196,8 +196,8 @@ function animate() {
     'use strict';
 
     if (move) {
-        fast += 0.1416 * 0.5;
-        slow += 0.1416 * 0.05;
+        fast += 0.1416 * 0.5;                       // TODO : Manter velocidadde independente do desempenho do computador
+        slow += 0.1416 * 0.05;                      // TODO : Manter velocidadde independente do desempenho do computador
         var cos = Math.cos(fast);
         var sin = Math.sin(fast);
         var pi = Math.PI;
