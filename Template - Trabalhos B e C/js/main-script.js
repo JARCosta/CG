@@ -1,13 +1,20 @@
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-var camera, scene, renderer;
+var camera, cameras = [], scene, renderer;
 
 var geometry, material, mesh;
+var wireframe_bool = true;
 
-var toro, cone, cube;
 
-var move, moving_obj = [], slow = 0,  fast = 0;
+var rotate, rotation_time = 0;
+var rotating_obj = [];
+
+var slow = 0,  fast = 0;
+var arms = [], head;
+
+var close;
+
 
 
 /////////////////////
@@ -23,8 +30,9 @@ function createScene() {
     scene.background = new THREE.Color(0x8888888);
 
 
-    move = false;
-    moving_obj.push(createRobot(0, 0, 0, 10));
+    rotate = false;
+    close = false;
+    rotating_obj.push(createRobot(0, 0, 0, 10));
 }
 
 //////////////////////
@@ -32,14 +40,32 @@ function createScene() {
 //////////////////////
 function createCamera() {
     'use strict';
-    camera = new THREE.PerspectiveCamera(70,
-                                         window.innerWidth / window.innerHeight,
-                                         1,
-                                         1000);
-    camera.position.x = 50;
-    camera.position.y = 50;
-    camera.position.z = 50;
+    
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    camera.position.set(50, 50, 50);
     camera.lookAt(scene.position);
+    cameras.push(camera);
+    
+    var temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
+    temp.position.set(50, 0,0);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+    
+    temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
+    temp.position.set(0, 50, 0);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+
+    temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
+    temp.position.set(0, 0, 50);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+    
+    temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
+    temp.position.set(50, 50, 50);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+
 }
 
 /////////////////////
@@ -50,17 +76,17 @@ function createCamera() {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
-function addBall(obj, material, x, y, z, size) {
+function createBall(obj, material, x, y, z, size) {
     'use strict';
 
-    geometry = new THREE.SphereGeometry( size/5, 16, 16 );
+    geometry = new THREE.SphereGeometry( size/2, 16, 16 );
     mesh = new THREE.Mesh(geometry, material);
     
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
 
-function addCube(obj, material, x, y, z, sizeX, sizeY, sizeZ) {
+function createCube(obj, material, x, y, z, sizeX, sizeY, sizeZ) {
     'use strict';
 
     geometry = new THREE.BoxGeometry( sizeX, sizeY, sizeZ );
@@ -71,47 +97,74 @@ function addCube(obj, material, x, y, z, sizeX, sizeY, sizeZ) {
     
 }
 
-function createCone(x,y,z, size) {
+function createCilinder(obj, material, x, y, z, diameter, height) {
     'use strict';
 
-    var cone = new THREE.Object3D();
-    cone.userData = { jumping: true, step: 0 };
+    var cilinder = new THREE.Object3D();
+    cilinder.userData = { jumping: true, step: 0 };
 
-    geometry = new THREE.ConeGeometry(size, size, size);
+    geometry = new THREE.CylinderGeometry(diameter, diameter, height, 8 );
     mesh = new THREE.Mesh(geometry, material);
 
-    cone.add(mesh);
-    cone.position.set(x, y + size/2, z);
-    // cone.rotation.x = Math.PI / 2 + (Math.PI)/10;
-    // cone.rotation.z = Math.PI / 2;
+    cilinder.add(mesh);
+    cilinder.position.set(x, y + diameter/2, z);
 
-
-    scene.add(cone);
-    return cone;
+    obj.add(cilinder);
 }
 
 
+function addChest(robot, x, y, z, size) {
+    'use strict';
+    
+    var chest = new THREE.Object3D();
+    
+    
+    var material = new THREE.MeshBasicMaterial({ color: 0x880000, wireframe: wireframe_bool });
+    createBall(chest, material, x, y, z, size/4);                                          // center
+    createCube(chest, material, x, y, z, size, size, size*2);                              // base
+    createCube(chest, material, x, y, z+size+size/20, size*3, size, size/10)               // bumper
+    createCube(chest, material, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
+    createCube(chest, material, x, y+size, z-size*1.5, size, size*3, size);                // back
+    
+    robot.add(chest);
+    return chest;
+}
 
-
-function addArm(obj, x, y, z, size) {
+function addArm(robot, x, y, z, size) {
     'use strict';
 
-    var material  = new THREE.MeshBasicMaterial({ color: 0x660000, wireframe: true });
-    addBall(obj, material, x, y, z, size);                                            // center
-    addCube(obj, material, x, y+size*1.5, z, size, size*2, size);                     // upper arm
-    addCube(obj, material, x, y, z+size, size, size, size*3);                         // lower arm
+    var arm = new THREE.Object3D();
+
+    var material  = new THREE.MeshBasicMaterial({ color: 0x660000, wireframe: wireframe_bool });
+    createBall(arm, material,       0, 0, 0,             size/4);                                 // center
+    createCube(arm, material,       0, size*1.5, 0,      size, size*2, size);                     // upper arm
+    createCube(arm, material,       0, 0, size,          size, size, size*3);                     // lower arm
+    var x_signal = x/Math.abs(x);
+    var material  = new THREE.MeshBasicMaterial({ color: 0x444444, wireframe: wireframe_bool });
+    createCilinder(arm, material,   size*0.5*x_signal, size*2, -size*0.5,     size/10, size*3);   // escape
     
+    arm.position.set(x, y, z);
+    
+    arms.push(arm);
+    robot.add(arm);
+    return arm;
 }
 
-function addChest(obj, x, y, z, size) {
+function addHead(robot, x, y, z, size) {
+    'use strict';
 
-    var material = new THREE.MeshBasicMaterial({ color: 0x880000, wireframe: true });
-    addBall(obj, material, x, y, z, size);                                            // center
-    addCube(obj, material, x, y, z, size, size, size*2);                              // base
-    addCube(obj, material, x, y, z+size+size/20, size*3, size, size/10)               // bumper
-    addCube(obj, material, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
-    addCube(obj, material, x, y+size, z-size*1.5, size, size*3, size);                // back
-    
+    var hed = new THREE.Object3D();
+
+    var material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool });
+    createBall(hed, material, 0, 0, 0, size/4);                                            // center
+    createBall(hed, material, 0, size, 0, size);                                            // center
+    createCilinder(hed, material, 0, size*0.5, 0, size/2, size/2);                          // neck
+
+    hed.position.set(x, y-size/2, z-size);
+
+    robot.add(hed);
+    head = hed;
+    return hed;
 }
 
 function createRobot(x, y, z, size) {
@@ -121,9 +174,12 @@ function createRobot(x, y, z, size) {
 
     
     addChest(robot, x, y, z, size);
+
+    addArm(robot, size + size, 0, -size*1.5 + size, size);
     
-    addArm(robot, size, 0, -size*1.5, size);
-    addArm(robot, -size, 0, -size*1.5, size);
+    addArm(robot, -size - size, 0, -size*1.5 + size, size);
+
+    addHead(robot, x, y+size*2.5, z, size);
 
     robot.position.set(x, y, z);
 
@@ -194,22 +250,53 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+    if (rotate) {
 
-    if (move) {
-        fast += 0.1416 * 0.5;                       // TODO : Manter velocidadde independente do desempenho do computador
-        slow += 0.1416 * 0.05;                      // TODO : Manter velocidadde independente do desempenho do computador
-        var cos = Math.cos(fast);
-        var sin = Math.sin(fast);
-        var pi = Math.PI;
+        rotation_time += 0.005;
+
+        for (var i = 0; i < rotating_obj.length; i++) {
+            rotating_obj[i].rotation.y = -rotation_time;
+        }
         
-        for (var i = 0; i < moving_obj.length; i++) {
-            // moving_obj[i].rotation.x = sin / pi;
-            // moving_obj[i].rotation.z = cos / pi;
+        
+    }
+    
+    if(close){
+        
+        slow += 0.01;
+        fast += 0.1;
+        
+        var slow_int = Math.round(slow);
+        console.log(slow_int);
 
-            moving_obj[i].rotation.y = -slow;
+        for (var i = 0; i < arms.length; i++) {
+            var x_signal = arms[i].position.x/Math.abs(arms[i].position.x);
+            // console.log(x_signal);
 
-            // moving_obj[i].position.x = 50 * (Math.sin(slow + i * 2 * pi / moving_obj.length) );
-            // moving_obj[i].position.z = 50 * (Math.cos(slow + i * 2 * pi / moving_obj.length));
+            if(slow_int % 5 == 1) {
+                // back
+                arms[i].position.z -= 0.1;
+            }
+            else if(slow_int % 5 == 2) {
+                // in
+                arms[i].position.x -= 0.1 * x_signal;
+            }
+            else if(slow_int % 5 == 3) {
+                // out
+                arms[i].position.x += 0.1 * x_signal;
+            }
+            else if(slow_int % 5 == 4) {
+                // front
+                arms[i].position.z += 0.1;
+            }
+        }
+        // goes down faster
+        if(slow_int % 5 == 1){ // || slow_int % 5 == 2) {
+            head.rotation.x += 0.01;
+        }
+        // goes up faster
+        else if(slow_int % 5 == 3){ // || slow_int % 5 == 4) {
+            head.rotation.x -= 0.01;
         }
     }
     render();
@@ -248,7 +335,7 @@ function onKeyDown(e) {
         break;
     case 83:  //S
     case 115: //s
-        move = !move;
+        rotate = !rotate;
         break;
     case 69:  //E
     case 101: //e
@@ -258,7 +345,26 @@ function onKeyDown(e) {
             }
         });
         break;
-    }
+    case 49: //1
+        camera = cameras[0];
+        break;
+    case 50: //2
+        camera = cameras[1];
+        break;
+    case 51: //3
+        camera = cameras[2];
+        break;
+    case 52: //4
+        camera = cameras[3];
+        break;
+    case 53: //5
+        camera = cameras[4];
+        break;
+    case 67: //C
+    case 99: //c
+        close = !close;
+        break;
+}
 }
 
 ///////////////////////
