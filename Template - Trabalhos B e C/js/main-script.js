@@ -202,8 +202,8 @@ function addLegs(robot, x, y, z, size) {
     createBall(leg, material,       0, 0, 0,             size/4);                                 // center
     createCube(leg, material, 0, 0, -size*0.5, size*2, size, size*2);                       // base for tire and bumper
     
-    addTire(robot, size*1.25, -size*2.25, 0, size);
-    addTire(robot, -size*1.25, -size*2.25, 0, size);
+    addTire(robot, size*1.25, -size*2.35, 0, size);
+    addTire(robot, -size*1.25, -size*2.35, 0, size);
     
     createCube(leg, material, size*0.75, 0, -size*1.5, size, size, size*1.5);                     // left leg
     createCube(leg, material, -size*0.75, 0, -size*1.5, size, size, size*1.5);                     // right leg
@@ -211,13 +211,12 @@ function addLegs(robot, x, y, z, size) {
     material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool });
     createCube(leg, material, size*0.75, 0, -size*3,      size*1.25, size*1.25, size*4);                     // left lower leg
     createCube(leg, material, -size*0.75, 0, -size*3,     size*1.25, size*1.25, size*4);                     // right lower leg
-    
-    material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
-    createCilinder(leg, material, size*1.6, -size*0.75, -size*4.1, size*1.25, size, true);            // left wheel
-    createCilinder(leg, material, size*1.6, -size*0.75, -size*3, size*1.25, size, true);            // left wheel
-    
-    createCilinder(leg, material, -size*1.6, -size*0.75, -size*4.1, size*1.25, size, true);            // left wheel
-    createCilinder(leg, material, -size*1.6, -size*0.75, -size*3, size*1.25, size, true);            // left wheel
+                 
+    addTire(leg, size*1.6, -size*1.35, -size*4, size);                                                     // left wheel
+    addTire(leg, size*1.6, -size*1.35, -size*2.5, size);                                                   // left wheel
+              
+    addTire(leg, -size*1.6, -size*1.35, -size*4, size);                                                     // right wheel
+    addTire(leg, -size*1.6, -size*1.35, -size*2.5, size);                                                   // right wheel
 
     addFoot(leg,  size*0.75, -size*0, -size*5.25, size);
     addFoot(leg, -size*0.75, -size*0, -size*5.25, size);
