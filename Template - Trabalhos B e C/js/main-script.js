@@ -4,14 +4,14 @@
 var camera, cameras = [], scene, renderer;
 
 var geometry, material, mesh;
-var wireframe_bool = true;
+var wireframe_bool = false;
 
 
 var rotate, rotation_time = 0;
 var rotating_obj = [];
 
 var slow = 0,  fast = 0;
-var arms = [], legs = [], head;
+var arms = [], legs = [], head, feet = [];
 
 var close;
 
@@ -32,7 +32,7 @@ function createScene() {
 
     rotate = false;
     close = false;
-    rotating_obj.push(createRobot(0, 0, 0, 10));
+    rotating_obj.push(createRobot(0, 5, 0, 10));
 }
 
 //////////////////////
@@ -40,6 +40,7 @@ function createScene() {
 //////////////////////
 function createCamera() {
     'use strict';
+    scene.positionY -= 50;
     
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.set(50, 50, 50);
@@ -47,7 +48,7 @@ function createCamera() {
     cameras.push(camera);
     
     var temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
-    temp.position.set(50, 0,0);
+    temp.position.set(50, 0, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
     
@@ -103,7 +104,7 @@ function createCilinder(obj, material, x, y, z, diameter, height, rotation) {
     var cilinder = new THREE.Object3D();
     cilinder.userData = { jumping: true, step: 0 };
 
-    geometry = new THREE.CylinderGeometry(diameter, diameter, height, 64);
+    geometry = new THREE.CylinderGeometry(diameter/2, diameter/2, height/2, 64);
     if (rotation)
         cilinder.rotation.z = 0.5*Math.PI;
     mesh = new THREE.Mesh(geometry, material);
@@ -112,6 +113,7 @@ function createCilinder(obj, material, x, y, z, diameter, height, rotation) {
     cilinder.position.set(x, y + diameter/2, z);
 
     obj.add(cilinder);
+    return cilinder;
 }
 
 
@@ -124,11 +126,15 @@ function addChest(robot, x, y, z, size) {
     var material = new THREE.MeshBasicMaterial({ color: 0x880000, wireframe: wireframe_bool });
     createBall(chest, material, x, y, z, size/4);                                          // center
     createCube(chest, material, x, y, z, size, size, size*2);                              // base
-    createCube(chest, material, x, y-size, z+size+size/20, size*3, size, size/10)          // bumper
+    createCube(chest, material, x, y-size*0.75, z+size+size/20, size*3, size, size/10)          // bumper
     createCube(chest, material, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
     createCube(chest, material, x, y+size, z-size*1.5, size, size*3, size);                // back
-    createCube(chest, material, x, y-size, z, size*2, size, size*2);                       // base for tire and bumper
     
+    // var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
+
+    // createCilinder(chest, material, size*1.5, -size*0.75, 0, size, size, true);            // left wheel
+    // createCilinder(chest, material, -size*1.5, -size*0.75, 0, size, size, true);           // right wheel
+
     robot.add(chest);
     return chest;
 }
@@ -161,7 +167,7 @@ function addHead(robot, x, y, z, size) {
     var material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool });
     createBall(hed, material, 0, 0, 0, size/4);                                            // center
     createBall(hed, material, 0, size, 0, size);                                            // center
-    createCilinder(hed, material, 0, size*0.5, 0, size/2, size/2, false);                          // neck
+    createCilinder(hed, material, 0, size*0.25, 0, size, size, false);                          // neck
 
     hed.position.set(x, y-size/2, z-size);
 
@@ -170,17 +176,54 @@ function addHead(robot, x, y, z, size) {
     return hed;
 }
 
-function addLeg(robot, x, y, z, size) {
+function addFoot(obj, x, y, z, size) {
+    'use strict';
+
+    var foot = new THREE.Object3D();
+
+    var material  = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: wireframe_bool });
+    createBall(foot, material,       0, 0, 0,             size/4);                                 // center
+
+    createCube(foot, material,       0, 0, -size*0.375,            size*1.25, size*1, size*1.25);                      // foot
+
+    foot.position.set(x, y, z);
+    foot.rotation.x = -Math.PI/2;
+    feet.push(foot);
+    obj.add(foot);
+    return foot;
+}
+
+function addLegs(robot, x, y, z, size) {
     'use strict';
 
     var leg = new THREE.Object3D();
 
     var material  = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: wireframe_bool });
     createBall(leg, material,       0, 0, 0,             size/4);                                 // center
-    createCube(leg, material,       0, size*1.5, 0,      size, size*2, size);                     // upper arm
-    createCube(leg, material,       0, 0, size,          size, size, size*3);                     // lower arm
+    createCube(leg, material, 0, 0, -size*0.5, size*2, size, size*2);                       // base for tire and bumper
+    
+    addTire(robot, size*1.25, -size*2.25, 0, size);
+    addTire(robot, -size*1.25, -size*2.25, 0, size);
+    
+    createCube(leg, material, size*0.75, 0, -size*1.5, size, size, size*1.5);                     // left leg
+    createCube(leg, material, -size*0.75, 0, -size*1.5, size, size, size*1.5);                     // right leg
+    
+    material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool });
+    createCube(leg, material, size*0.75, 0, -size*3,      size*1.25, size*1.25, size*4);                     // left lower leg
+    createCube(leg, material, -size*0.75, 0, -size*3,     size*1.25, size*1.25, size*4);                     // right lower leg
+    
+    material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
+    createCilinder(leg, material, size*1.6, -size*0.75, -size*4.1, size*1.25, size, true);            // left wheel
+    createCilinder(leg, material, size*1.6, -size*0.75, -size*3, size*1.25, size, true);            // left wheel
+    
+    createCilinder(leg, material, -size*1.6, -size*0.75, -size*4.1, size*1.25, size, true);            // left wheel
+    createCilinder(leg, material, -size*1.6, -size*0.75, -size*3, size*1.25, size, true);            // left wheel
+
+    addFoot(leg,  size*0.75, -size*0, -size*5.25, size);
+    addFoot(leg, -size*0.75, -size*0, -size*5.25, size);
     
     leg.position.set(x, y, z);
+    leg.rotateX(-Math.PI/2);
     
     legs.push(leg);
     robot.add(leg);
@@ -192,7 +235,7 @@ function addTire(robot, x, y, z, size) {
 
     var tire = new THREE.Object3D();
     var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
-    createCilinder(tire, material, 0, size*0.5, 0, size/2, size/2, true);  
+    createCilinder(tire, material, 0, size*0.5, 0, size*1.2, size, true);  
 
     tire.position.set(x, y, z);
     
@@ -208,17 +251,14 @@ function createRobot(x, y, z, size) {
     
     addChest(robot, x, y, z, size);
 
-    addArm(robot, size + size, 0, -size*1.5 + size, size);
-    
-    addArm(robot, -size - size, 0, -size*1.5 + size, size);
+    addArm(robot, size + size, 0, -size*2.5 + size, size);
+    addArm(robot, -size - size, 0, -size*2.5 + size, size);
 
     addHead(robot, x, y+size*2.5, z, size);
 
-    addTire(robot, size*1.25, y - size*2.25, z, size);
+    addLegs(robot, x, y - size*1.5, z - size*0.5, size);
 
-    addTire(robot, -size*1.25, y - size*2.25, z, size);
-
-    //addLeg(robot, -size - size, y-size*3, -size*1.5 + size, size);
+    //addLegs(robot, -size - size, y-size*3, -size*1.5 + size, size);
 
     robot.position.set(x, y, z);
 
@@ -289,55 +329,7 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
-    if (rotate) {
 
-        rotation_time += 0.005;
-
-        for (var i = 0; i < rotating_obj.length; i++) {
-            rotating_obj[i].rotation.y = -rotation_time;
-        }
-        
-        
-    }
-    
-    if (close) {
-        
-        slow += 0.01;
-        fast += 0.1;
-        
-        var slow_int = Math.round(slow);
-        console.log(slow_int);
-
-        for (var i = 0; i < arms.length; i++) {
-            var x_signal = arms[i].position.x/Math.abs(arms[i].position.x);
-            // console.log(x_signal);
-
-            if(slow_int % 5 == 1) {
-                // back
-                arms[i].position.z -= 0.1;
-            }
-            else if(slow_int % 5 == 2) {
-                // in
-                arms[i].position.x -= 0.1 * x_signal;
-            }
-            else if(slow_int % 5 == 3) {
-                // out
-                arms[i].position.x += 0.1 * x_signal;
-            }
-            else if(slow_int % 5 == 4) {
-                // front
-                arms[i].position.z += 0.1;
-            }
-        }
-        // goes down faster
-        if(slow_int % 5 == 1){ // || slow_int % 5 == 2) {
-            head.rotation.x += 0.01;
-        }
-        // goes up faster
-        else if(slow_int % 5 == 3){ // || slow_int % 5 == 4) {
-            head.rotation.x -= 0.01;
-        }
-    }
     render();
 
     requestAnimationFrame(animate);
@@ -364,26 +356,6 @@ function onKeyDown(e) {
     'use strict';
 
     switch (e.keyCode) {
-    case 65: //A
-    case 97: //a
-        scene.traverse(function (node) {
-            if (node instanceof THREE.Mesh) {
-                node.material.wireframe = !node.material.wireframe;
-            }
-        });
-        break;
-    case 83:  //S
-    case 115: //s
-        rotate = !rotate;
-        break;
-    case 69:  //E
-    case 101: //e
-        scene.traverse(function (node) {
-            if (node instanceof THREE.AxisHelper) {
-                node.visible = !node.visible;
-            }
-        });
-        break;
     case 49: //1
         camera = cameras[0];
         break;
@@ -403,6 +375,93 @@ function onKeyDown(e) {
     case 99: //c
         close = !close;
         break;
+
+    // ARMS
+    case 69: //E
+    case 101: //e
+        // console.log(arms[0].position.x);
+        for(var i = 0; i < arms.length; i++) {
+            var pos_abs = Math.abs(arms[i].position.x);
+            var pos_sig = arms[i].position.x/pos_abs;
+            if(pos_abs < 20) {
+                arms[i].position.x += 0.2 * pos_sig;
+            }
+        }
+        break;
+    case 68: //D
+    case 100: //d
+        // console.log(arms[0].position.x);
+        for(var i = 0; i < arms.length; i++) {
+            var pos_abs = Math.abs(arms[i].position.x);
+            var pos_sig = arms[i].position.x/pos_abs;
+            if(pos_abs > 10) {
+                arms[i].position.x -= 0.2 * pos_sig;
+            }
+        }
+        break;
+
+    // HEAD
+    case 82: //R
+    case 114: //r
+        // console.log(head.rotation.x);
+        if(head.rotation.x < Math.PI/2) {
+            head.rotation.x += 0.05;
+        }
+        break;
+    case 70: //F
+    case 102: //f
+        // console.log(head.rotation.x);
+        if(head.rotation.x > 0) {
+            head.rotation.x -= 0.05;
+        }
+        break;
+    case 87: //W
+    case 119: //w
+        for(var i = 0; i < legs.length; i++) {
+            console.log(legs[i].rotation.x);
+            if(legs[i].rotation.x - 0.05 > -Math.PI/2) {
+                legs[i].rotation.x -= 0.05;
+            }
+            else {
+                legs[i].rotation.x = -Math.PI/2;
+            }
+        }
+        break;
+    case 83: //S
+    case 115: //s
+        for(var i = 0; i < legs.length; i++) {
+            console.log(legs[i].rotation.x);
+            if(legs[i].rotation.x + 0.05 < 0) {
+                legs[i].rotation.x += 0.05;
+            }
+            else {
+                legs[i].rotation.x = 0;
+            }
+        }
+        break;
+    case 81: //Q
+    case 113: //q
+        for(var i = 0; i < feet.length; i++) {
+            console.log(feet[i].rotation.x);
+            if(feet[i].rotation.x - 0.05 > -Math.PI/2) {
+                feet[i].rotation.x -= 0.05;
+            }
+            else {
+                feet[i].rotation.x = -Math.PI/2;
+            }
+        }
+        break;
+    case 65: //A
+    case 97: //a
+        for(var i = 0; i < feet.length; i++) {
+            console.log(feet[i].rotation.x);
+            if(feet[i].rotation.x + 0.05 < 0) {
+                feet[i].rotation.x += 0.05;
+            }
+            else {
+                feet[i].rotation.x = 0;
+            }
+        }
 }
 }
 
