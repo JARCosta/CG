@@ -11,7 +11,7 @@ var rotate, rotation_time = 0;
 var rotating_obj = [];
 
 var slow = 0,  fast = 0;
-var arms = [], head;
+var arms = [], legs = [], head;
 
 var close;
 
@@ -97,13 +97,15 @@ function createCube(obj, material, x, y, z, sizeX, sizeY, sizeZ) {
     
 }
 
-function createCilinder(obj, material, x, y, z, diameter, height) {
+function createCilinder(obj, material, x, y, z, diameter, height, rotation) {
     'use strict';
 
     var cilinder = new THREE.Object3D();
     cilinder.userData = { jumping: true, step: 0 };
 
-    geometry = new THREE.CylinderGeometry(diameter, diameter, height, 8 );
+    geometry = new THREE.CylinderGeometry(diameter, diameter, height, 64);
+    if (rotation)
+        cilinder.rotation.z = 0.5*Math.PI;
     mesh = new THREE.Mesh(geometry, material);
 
     cilinder.add(mesh);
@@ -122,9 +124,10 @@ function addChest(robot, x, y, z, size) {
     var material = new THREE.MeshBasicMaterial({ color: 0x880000, wireframe: wireframe_bool });
     createBall(chest, material, x, y, z, size/4);                                          // center
     createCube(chest, material, x, y, z, size, size, size*2);                              // base
-    createCube(chest, material, x, y, z+size+size/20, size*3, size, size/10)               // bumper
+    createCube(chest, material, x, y-size, z+size+size/20, size*3, size, size/10)          // bumper
     createCube(chest, material, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
     createCube(chest, material, x, y+size, z-size*1.5, size, size*3, size);                // back
+    createCube(chest, material, x, y-size, z, size*2, size, size*2);                       // base for tire and bumper
     
     robot.add(chest);
     return chest;
@@ -141,7 +144,7 @@ function addArm(robot, x, y, z, size) {
     createCube(arm, material,       0, 0, size,          size, size, size*3);                     // lower arm
     var x_signal = x/Math.abs(x);
     var material  = new THREE.MeshBasicMaterial({ color: 0x444444, wireframe: wireframe_bool });
-    createCilinder(arm, material,   size*0.5*x_signal, size*2, -size*0.5,     size/10, size*3);   // escape
+    createCilinder(arm, material,   size*0.5*x_signal, size*2, -size*0.5,     size/10, size*3, false);   // escape
     
     arm.position.set(x, y, z);
     
@@ -158,13 +161,43 @@ function addHead(robot, x, y, z, size) {
     var material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool });
     createBall(hed, material, 0, 0, 0, size/4);                                            // center
     createBall(hed, material, 0, size, 0, size);                                            // center
-    createCilinder(hed, material, 0, size*0.5, 0, size/2, size/2);                          // neck
+    createCilinder(hed, material, 0, size*0.5, 0, size/2, size/2, false);                          // neck
 
     hed.position.set(x, y-size/2, z-size);
 
     robot.add(hed);
     head = hed;
     return hed;
+}
+
+function addLeg(robot, x, y, z, size) {
+    'use strict';
+
+    var leg = new THREE.Object3D();
+
+    var material  = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: wireframe_bool });
+    createBall(leg, material,       0, 0, 0,             size/4);                                 // center
+    createCube(leg, material,       0, size*1.5, 0,      size, size*2, size);                     // upper arm
+    createCube(leg, material,       0, 0, size,          size, size, size*3);                     // lower arm
+    
+    leg.position.set(x, y, z);
+    
+    legs.push(leg);
+    robot.add(leg);
+    return leg;
+}
+
+function addTire(robot, x, y, z, size) {
+    'use strict';
+
+    var tire = new THREE.Object3D();
+    var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
+    createCilinder(tire, material, 0, size*0.5, 0, size/2, size/2, true);  
+
+    tire.position.set(x, y, z);
+    
+    robot.add(tire);
+    return tire;
 }
 
 function createRobot(x, y, z, size) {
@@ -180,6 +213,12 @@ function createRobot(x, y, z, size) {
     addArm(robot, -size - size, 0, -size*1.5 + size, size);
 
     addHead(robot, x, y+size*2.5, z, size);
+
+    addTire(robot, size*1.25, y - size*2.25, z, size);
+
+    addTire(robot, -size*1.25, y - size*2.25, z, size);
+
+    //addLeg(robot, -size - size, y-size*3, -size*1.5 + size, size);
 
     robot.position.set(x, y, z);
 
@@ -261,7 +300,7 @@ function animate() {
         
     }
     
-    if(close){
+    if (close) {
         
         slow += 0.01;
         fast += 0.1;
