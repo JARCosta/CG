@@ -34,6 +34,7 @@ function createScene() {
     rotate = false;
     close = false;
     createRobot(0, 5, 10, 10);
+    createTrailer(0, 5, 10, 10);
 }
 
 //////////////////////
@@ -48,7 +49,7 @@ function createCamera() {
     temp.lookAt(scene.position);
     cameras.push(temp);
     
-    var temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
+    var temp = new THREE.OrthographicCamera(window.innerWidth / - 10, window.innerWidth / 10, window.innerHeight / 10, window.innerHeight / - 10, 1, 1000);
     temp.position.set(50, 0, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
@@ -319,6 +320,29 @@ function createRobot(x, y, z, size) {
 
     scene.add(robot);
     return robot;
+}
+
+function createTrailer(x, y, z, size) {
+    'use strict';
+
+    var trailer = new THREE.Object3D();
+    
+    var material = new THREE.MeshBasicMaterial({ color: 0x0000A0, wireframe: wireframe_bool });
+    createCube(trailer, material, x, y+size*1.3, -z-size*5, size*3, size*3, size*10); 
+    var material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool }); 
+    createCube(trailer, material, x, y-size*0.85, -z-size*8, size*2.75 /*right size - dont touch*/, size*1.3, size*3);
+
+    addTire(trailer, size*1.6, -size*1.85, -size*8.25, size);                                                     // left wheel
+    addTire(trailer, size*1.6, -size*1.85, -size*9.75, size);                                                   // left wheel
+              
+    addTire(trailer, -size*1.6, -size*1.85, -size*8.25, size);                                                     // right wheel
+    addTire(trailer, -size*1.6, -size*1.85, -size*9.75, size);                                                   // right wheel
+
+
+    trailer.position.set(x, y, z);
+
+    scene.add(trailer);
+    return trailer;
 }
 
 //////////////////////
