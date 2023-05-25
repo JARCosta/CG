@@ -31,6 +31,8 @@ let feetUp = false;
     armsOut = false;
     armsIn = false;
 
+var collided, animating; 
+
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -47,6 +49,8 @@ function createScene() {
 
     rotate = false;
     close = false;
+    collided = false;
+    animating = false;
     robot = createRobot(0, 5, 10, 10);
     trailer = createTrailer(0, 5, -20, 10);
 }
@@ -374,13 +378,107 @@ function createTrailer(x, y, z, size) {
 function checkCollisions(){
     'use strict';
 
+    // coupling collision
+    // console.log(couplings[0].children[0]);
+    var parent_pos_1 = couplings[0].parent.position;
+    var child_size_1 = couplings[0].children[0].geometry.parameters;
+    var min_x_1 = parent_pos_1.x - child_size_1.width/2;
+    var max_x_1 = parent_pos_1.x + child_size_1.width/2;
+    var min_y_1 = parent_pos_1.y - child_size_1.height/2;
+    var max_y_1 = parent_pos_1.y + child_size_1.height/2;
+    var min_z_1 = parent_pos_1.z - child_size_1.depth/2;
+    var max_z_1 = parent_pos_1.z + child_size_1.depth/2;
+    
+    var parent_pos_2 = couplings[1].parent.position;
+    var child_size_2 = couplings[1].children[0].geometry.parameters;
+    var min_x_2 = parent_pos_2.x - (child_size_2.width/2 * 4);
+    var max_x_2 = parent_pos_2.x + (child_size_2.width/2 * 4);
+    var min_y_2 = parent_pos_2.y - (child_size_2.height/2 * 4);
+    var max_y_2 = parent_pos_2.y + (child_size_2.height/2 * 4);
+    var min_z_2 = parent_pos_2.z - (child_size_2.depth/2 * 4);
+    var max_z_2 = parent_pos_2.z + (child_size_2.depth/2 * 4);
+
+    if (max_x_1 >= min_x_2 && min_x_1 <= max_x_2 && max_y_1 >= min_y_2 && min_y_1 <= max_y_2 && max_z_1 >= min_z_2 && min_z_1 <= max_z_2) {
+        if  (collided == false){
+            if (isTruckMode() == true){
+                // console.log("collided");
+                collided = true;
+
+                var x = parent_pos_1.x - parent_pos_2.x;
+                var z = parent_pos_1.z - parent_pos_2.z;
+
+                handleCollisions(x,z);
+            }   
+        }
+    }
+    else {
+        if (collided == true){
+            // console.log("descollided");
+            collided = false;
+        }
+    }
+}
+
+function isTruckMode(){
+    'use strict';
+    var truck_mode = 0;
+
+    // arms (should be 2)
+    for (var i = 0; i < arms.length; i++) {
+        var pos_abs = Math.abs(arms[i].position.x);
+        var pos_sig = arms[i].position.x/pos_abs;
+        if (arms[i].position.x == 10 * pos_sig){
+            // console.log("arm");
+            truck_mode++;
+        }
+    }
+
+    // legs (should be 1)
+    for (var i = 0; i < legs.length; i++) {
+        var pos_abs = Math.abs(legs[i].position.x);
+        var pos_sig = legs[i].position.x/pos_abs;
+        if (legs[i].rotation.x == 0){
+            // console.log("leg");
+            truck_mode++;
+        }
+    }
+
+    // head (should be 1)
+    if( head.rotation.x == -Math.PI/2){
+        // console.log("head");
+        truck_mode++;
+    }
+
+    // feet (should be 2)
+    for (var i = 0; i < feet.length; i++) {
+        var pos_abs = Math.abs(feet[i].position.x);
+        var pos_sig = feet[i].position.x/pos_abs;
+        if (feet[i].rotation.x == Math.PI/2){
+            // console.log("foot");
+            truck_mode++;
+        }
+    }
+    
+
+    // console.log(truck_mode)
+    return truck_mode == 6;
 }
 
 ///////////////////////
 /* HANDLE COLLISIONS */
 ///////////////////////
-function handleCollisions(){
+function handleCollisions(x,z){
     'use strict';
+
+    console.log(x, z);
+    
+    for ( var i = 0; i < 100; i++){
+        animating = true;
+        trailer.position.x += x/100;
+        trailer.position.z += z/100;
+        render();
+        // console.log(trailer.position.x, trailer.position.z);
+    }
 
 }
 
@@ -390,10 +488,7 @@ function handleCollisions(){
 function update(){
     'use strict';
     delta = clock.getDelta();
-    // if(clock.getdelta >= 10/0.001)
-    //    atualiza
-
-    // angulo += velocidade
+    checkCollisions();
 }
 
 /////////////
@@ -438,9 +533,10 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+    // console.log(collided);
 
     if(armsOut){
-        console.log(arms[0].position.x);
+        // console.log(arms[0].position.x);
         for(var i = 0; i < arms.length; i++) {
             var pos_abs = Math.abs(arms[i].position.x);
             var pos_sig = arms[i].position.x/pos_abs;
@@ -451,18 +547,21 @@ function animate() {
     }
 
     if(armsIn){
-        console.log(arms[0].position.x);
+        // console.log(arms[0].position.x);
         for(var i = 0; i < arms.length; i++) {
             var pos_abs = Math.abs(arms[i].position.x);
             var pos_sig = arms[i].position.x/pos_abs;
             if(pos_abs > 10) {
                 arms[i].position.x -= 10 * pos_sig * delta;
             }
+            else {
+                arms[i].position.x = 10 * pos_sig;
+            }
         }
     }
 
     if(headDown){
-        console.log(head.rotation.x);
+        // console.log(head.rotation.x);
         if(head.rotation.x > -Math.PI/2) {
             head.rotation.x -= 1 * delta;
         }
@@ -473,7 +572,7 @@ function animate() {
     }
 
     if(headUp){
-        console.log(head.rotation.x);
+        // console.log(head.rotation.x);
         if(head.rotation.x < 0) {
             head.rotation.x += 1 * delta;
         }
@@ -486,7 +585,7 @@ function animate() {
 
         
         for(var i = 0; i < feet.length; i++) {
-            console.log(feet[i].rotation.x);
+            // console.log(feet[i].rotation.x);
             if(feet[i].rotation.x - 0.05 > -Math.PI/2) {
                 feet[i].rotation.x -= 1 * delta;
             }
@@ -500,7 +599,7 @@ function animate() {
     if(feetDown){
 
         for(var i = 0; i < feet.length; i++) {
-            console.log(feet[i].rotation.x);
+            // console.log(feet[i].rotation.x);
             if(feet[i].rotation.x + 0.05 < Math.PI/2) {
                 feet[i].rotation.x += 1 * delta;
             }
@@ -512,7 +611,7 @@ function animate() {
     }
 
     if(legsDown){
-        console.log(legs[0].rotation.x);
+        // console.log(legs[0].rotation.x);
         for(var i = 0; i < legs.length; i++) {
             if(legs[i].rotation.x - 0.05 > -Math.PI/2) {
                 legs[i].rotation.x -= 2 * delta;
@@ -524,7 +623,7 @@ function animate() {
     }
 
     if(legsUp){
-        console.log(legs[0].rotation.x);
+        // console.log(legs[0].rotation.x);
         for(var i = 0; i < legs.length; i++) {
             if(legs[i].rotation.x + 0.05 < 0) {
                 legs[i].rotation.x += 2 * delta;
@@ -538,21 +637,7 @@ function animate() {
 
   
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    checkCollisions();
 
     delta = clock.getDelta();
     render();
@@ -582,19 +667,24 @@ function onKeyDown(e) {
 
     switch (e.keyCode) {
     case 49: //1
-        camera = cameras[0];
+        if(!animating)
+            camera = cameras[0];
         break;
     case 50: //2
-        camera = cameras[1];
+        if(!animating)
+            camera = cameras[1];
         break;
     case 51: //3
-        camera = cameras[2];
+        if(!animating)
+            camera = cameras[2];
         break;
     case 52: //4
-        camera = cameras[3];
+        if(!animating)
+            camera = cameras[3];
         break;
     case 53: //5
-        camera = cameras[4];
+        if(!animating)
+            camera = cameras[4];
         break;
 
     case 54: //6
@@ -615,41 +705,41 @@ function onKeyDown(e) {
     // ARMS
     case 69: //E
     case 101: //e
-    armsOut = true;
+        armsOut = true;
         break;
     case 68: //D
     case 100: //d
-    armsIn = true;
+        armsIn = true;
         break;
 
     // HEAD
     case 82: //R
     case 114: //r
-    headUp = true;
+        headUp = true;
         break;
     case 70: //F
     case 102: //f
-    headDown = true;
+        headDown = true;
         break;
 
     // LEGS
     case 87: //W
     case 119: //w
-    legsDown = true;
+        legsDown = true;
         break;
     case 83: //S
     case 115: //s
-    legsUp = true;
+        legsUp = true;
         break;
 
     // FEET
     case 81: //Q
     case 113: //q
-    feetUp = true;
+        feetUp = true;
         break;
     case 65: //A
     case 97: //a
-    feetDown = true;
+        feetDown = true;
     break;
     // arrow keys
     case 37: //left
