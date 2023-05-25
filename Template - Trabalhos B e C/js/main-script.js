@@ -43,10 +43,10 @@ function createCamera() {
     'use strict';
     scene.positionY -= 50;
     
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set(50, 50, 50);
-    camera.lookAt(scene.position);
-    cameras.push(camera);
+    var temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
+    temp.position.set(0, 0, 50);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
     
     var temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
     temp.position.set(50, 0, 0);
@@ -119,6 +119,24 @@ function createCilinder(obj, material, x, y, z, diameter, height, rotation) {
     return cilinder;
 }
 
+function createCone(obj, material, x, y, z, diameter, height, rotation) {
+    'use strict';
+
+    var cone = new THREE.Object3D();
+    cone.userData = { jumping: true, step: 0 };
+
+    geometry = new THREE.ConeGeometry(diameter/2, height/2, 64);
+    if (rotation)
+        cone.rotation.z = 0.5*Math.PI;
+    mesh = new THREE.Mesh(geometry, material);
+
+    cone.add(mesh);
+    cone.position.set(x, y + diameter/2, z);
+
+    obj.add(cone);
+    return cone;
+}
+
 
 function addChest(robot, x, y, z, size) {
     'use strict';
@@ -131,11 +149,11 @@ function addChest(robot, x, y, z, size) {
     createCube(chest, material, x, y, z, size, size, size*2);                              // base
     createCube(chest, material, x, y-size*0.75, z+size+size/20, size*3, size, size/10)          // bumper
     createCube(chest, material, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
-    createCube(chest, material, x, y+size, z-size*1.5, size, size*3, size);                // back
+    createCube(chest, material, x, y+size*0.5, z-size*1.5, size, size*2, size);                // back
     var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
     createCube(chest, material, x, y-size*0.75, z+size+size/10, size*1.25, size/1.8, size/10)      // plate
     
-    addCoupling(chest, x, y, z-size*2, size);
+    addCoupling(chest, x, y-size*0.25, z-size*2, size);
     // var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
 
     // createCilinder(chest, material, size*1.5, -size*0.75, 0, size, size, true);            // left wheel
@@ -170,10 +188,26 @@ function addHead(robot, x, y, z, size) {
 
     var hed = new THREE.Object3D();
 
-    var material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool });
+    var material = new THREE.MeshBasicMaterial({ color: 0x000066, wireframe: wireframe_bool });
     createBall(hed, material, 0, 0, 0, size/4);                                            // center
-    createBall(hed, material, 0, size, 0, size);                                            // center
-    createCilinder(hed, material, 0, size*0.25, 0, size, size, false);                          // neck
+    // createBall(hed, material, 0, size, 0, size);                                            // center
+    // createCilinder(hed, material, 0, size*0.25, 0, size, size, false);                          // neck
+    createCube(hed, material, 0, size, 0, size*1, size*1, size*1);                 // head
+
+    // eye
+    var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    createCube(hed, material, -size*0.25, size*1.25, size*0.5, size*0.25, size*0.25, size*0.25);
+    createCube(hed, material, size*0.25, size*1.25, size*0.5, size*0.25, size*0.25, size*0.25);
+
+    // eye pupil
+    var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
+    createCube(hed, material, -size*0.25, size*1.25, size*0.6, size*0.125, size*0.125, size*0.125);
+    createCube(hed, material, size*0.25, size*1.25, size*0.6, size*0.125, size*0.125, size*0.125);
+
+    // cone ears
+    var material = new THREE.MeshBasicMaterial({ color: 0x000044, wireframe: wireframe_bool });
+    createCone(hed, material, -size*0.25, size*1.5, 0, size*0.25, size*0.5, false);
+    createCone(hed, material, size*0.25, size*1.5, 0, size*0.25, size*0.5, false);
 
     hed.position.set(x, y-size/2, z-size);
 
@@ -272,10 +306,10 @@ function createRobot(x, y, z, size) {
     
     addChest(robot, x, y, z, size);
 
-    addArm(robot, size + size, size*0.5, -size*2.5 + size, size);
-    addArm(robot, -size - size, size*0.5, -size*2.5 + size, size);
+    addArm(robot, size + size, size*0.5, -size*0.5, size);
+    addArm(robot, -size - size, size*0.5, -size*0.5, size);
 
-    addHead(robot, x, y+size*2.5, z, size);
+    addHead(robot, x, y+size*2.5, z+size*0.5, size);
 
     addLegs(robot, x, y - size, z - size*0.5, size);
 
@@ -435,15 +469,21 @@ function onKeyDown(e) {
     case 82: //R
     case 114: //r
         // console.log(head.rotation.x);
-        if(head.rotation.x > 0) {
-            head.rotation.x -= 0.05;
+        if(head.rotation.x < 0) {
+            head.rotation.x += 0.05;
+        }
+        else {
+            head.rotation.x = 0;
         }
         break;
-    case 70: //F
-    case 102: //f
+        case 70: //F
+        case 102: //f
         // console.log(head.rotation.x);
-        if(head.rotation.x < Math.PI/2) {
-            head.rotation.x += 0.05;
+        if(head.rotation.x > -Math.PI/2) {
+            head.rotation.x -= 0.05;
+        }
+        else {
+            head.rotation.x = -Math.PI/2;
         }
         break;
     case 87: //W
