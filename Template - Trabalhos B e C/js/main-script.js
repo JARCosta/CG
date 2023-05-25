@@ -12,6 +12,7 @@ var rotating_obj = [];
 
 var slow = 0,  fast = 0;
 var arms = [], legs = [], head, feet = [];
+var couplings = [];
 
 var close;
 
@@ -32,7 +33,7 @@ function createScene() {
 
     rotate = false;
     close = false;
-    rotating_obj.push(createRobot(0, 5, 0, 10));
+    createRobot(0, 5, 10, 10);
 }
 
 //////////////////////
@@ -42,7 +43,7 @@ function createCamera() {
     'use strict';
     scene.positionY -= 50;
     
-    camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000);
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.set(50, 50, 50);
     camera.lookAt(scene.position);
     cameras.push(camera);
@@ -51,21 +52,23 @@ function createCamera() {
     temp.position.set(50, 0, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
-    
+
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
     temp.position.set(0, 50, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
 
-    temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
-    temp.position.set(0, 0, 50);
-    temp.lookAt(scene.position);
-    cameras.push(temp);
     
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
     temp.position.set(50, 50, 50);
     temp.lookAt(scene.position);
     cameras.push(temp);
+
+    temp = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000);
+    temp.position.set(50, 50, 50);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+    camera = temp;
 
 }
 
@@ -132,6 +135,7 @@ function addChest(robot, x, y, z, size) {
     var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
     createCube(chest, material, x, y-size*0.75, z+size+size/10, size*1.25, size/1.8, size/10)      // plate
     
+    addCoupling(chest, x, y, z-size*2, size);
     // var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
 
     // createCilinder(chest, material, size*1.5, -size*0.75, 0, size, size, true);            // left wheel
@@ -152,7 +156,7 @@ function addArm(robot, x, y, z, size) {
     createCube(arm, material,       0, 0, size,          size, size, size*3);                     // lower arm
     var x_signal = x/Math.abs(x);
     var material  = new THREE.MeshBasicMaterial({ color: 0x444444, wireframe: wireframe_bool });
-    createCilinder(arm, material,   size*0.5*x_signal, size*2, -size*0.5,     size/10, size*3, false);   // escape
+    createCilinder(arm, material,   size*0.5*x_signal, size*2, -size*0.5,     size/5, size*5, false);   // exaust
     
     arm.position.set(x, y, z);
     
@@ -186,7 +190,7 @@ function addFoot(obj, x, y, z, size) {
     var material  = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: wireframe_bool });
     createBall(foot, material,       0, 0, 0,             size/4);                                 // center
 
-    createCube(foot, material,       0, 0, -size*0.375,            size*1.25, size*1, size*1.25);                      // foot
+    createCube(foot, material,       0, size*0.5, -size*0.875,            size*1.25, size*1, size*1.75);                      // foot
 
     foot.position.set(x, y, z);
     foot.rotation.x = -Math.PI/2;
@@ -220,8 +224,8 @@ function addLegs(robot, x, y, z, size) {
     addTire(leg, -size*1.6, -size*1.35, -size*4, size);                                                     // right wheel
     addTire(leg, -size*1.6, -size*1.35, -size*2.5, size);                                                   // right wheel
 
-    addFoot(leg,  size*0.75, -size*0, -size*5.25, size);
-    addFoot(leg, -size*0.75, -size*0, -size*5.25, size);
+    addFoot(leg,  size*0.75, size*0.25, -size*5, size);
+    addFoot(leg, -size*0.75, size*0.25, -size*5, size);
     
     leg.position.set(x, y, z);
     leg.rotateX(-Math.PI/2);
@@ -242,6 +246,22 @@ function addTire(robot, x, y, z, size) {
     
     robot.add(tire);
     return tire;
+}
+
+function addCoupling(obj, x, y, z, size) {
+    'use strict';
+
+    var coupling = new THREE.Object3D();
+
+    var material  = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: wireframe_bool });
+
+    createCube(coupling, material, 0, 0, 0, size*0.5, size*0.5, size*0.5);                     // coupling
+
+    coupling.position.set(x, y, z);
+
+    obj.add(coupling);
+    couplings.push(coupling);
+    return coupling;
 }
 
 function createRobot(x, y, z, size) {
@@ -289,6 +309,10 @@ function handleCollisions(){
 function update(){
     'use strict';
 
+    // if(clock.getdelta >= 10/0.001)
+    //    atualiza
+
+    // angulo += velocidade
 }
 
 /////////////
@@ -304,6 +328,9 @@ function render() {
 ////////////////////////////////
 function init() {
     'use strict';
+
+    // cloxk = new
+
     renderer = new THREE.WebGLRenderer({
         antialias: true
     });
@@ -377,6 +404,9 @@ function onKeyDown(e) {
         close = !close;
         break;
 
+    
+    // velocidade = delta
+
     // ARMS
     case 69: //E
     case 101: //e
@@ -405,15 +435,15 @@ function onKeyDown(e) {
     case 82: //R
     case 114: //r
         // console.log(head.rotation.x);
-        if(head.rotation.x < Math.PI/2) {
-            head.rotation.x += 0.05;
+        if(head.rotation.x > 0) {
+            head.rotation.x -= 0.05;
         }
         break;
     case 70: //F
     case 102: //f
         // console.log(head.rotation.x);
-        if(head.rotation.x > 0) {
-            head.rotation.x -= 0.05;
+        if(head.rotation.x < Math.PI/2) {
+            head.rotation.x += 0.05;
         }
         break;
     case 87: //W
