@@ -202,8 +202,8 @@ function addLegs(robot, x, y, z, size) {
     createBall(leg, material,       0, 0, 0,             size/4);                                 // center
     createCube(leg, material, 0, 0, -size*0.5, size*2, size, size*2);                       // base for tire and bumper
     
-    addTire(robot, size*1.25, -size*2.35, 0, size);
-    addTire(robot, -size*1.25, -size*2.35, 0, size);
+    addTire(leg, size*1.6, -size*1.35, -size*0.15, size);
+    addTire(leg, -size*1.6, -size*1.35, -size*0.15, size);
     
     createCube(leg, material, size*0.75, 0, -size*1.5, size, size, size*1.5);                     // left leg
     createCube(leg, material, -size*0.75, 0, -size*1.5, size, size, size*1.5);                     // right leg
@@ -250,12 +250,12 @@ function createRobot(x, y, z, size) {
     
     addChest(robot, x, y, z, size);
 
-    addArm(robot, size + size, 0, -size*2.5 + size, size);
-    addArm(robot, -size - size, 0, -size*2.5 + size, size);
+    addArm(robot, size + size, size*0.5, -size*2.5 + size, size);
+    addArm(robot, -size - size, size*0.5, -size*2.5 + size, size);
 
     addHead(robot, x, y+size*2.5, z, size);
 
-    addLegs(robot, x, y - size*1.5, z - size*0.5, size);
+    addLegs(robot, x, y - size, z - size*0.5, size);
 
     //addLegs(robot, -size - size, y-size*3, -size*1.5 + size, size);
 
