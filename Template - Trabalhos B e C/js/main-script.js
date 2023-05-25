@@ -42,7 +42,7 @@ function createCamera() {
     'use strict';
     scene.positionY -= 50;
     
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.set(50, 50, 50);
     camera.lookAt(scene.position);
     cameras.push(camera);
@@ -130,7 +130,7 @@ function addChest(robot, x, y, z, size) {
     createCube(chest, material, x, y+size*1.5, z, size*3, size*2, size*2);                 // windows
     createCube(chest, material, x, y+size, z-size*1.5, size, size*3, size);                // back
     var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
-    createCube(chest, material, x, y-size*0.75, z+size+size/20, size*1.25, size/1.8, size/10)          // plate
+    createCube(chest, material, x, y-size*0.75, z+size+size/10, size*1.25, size/1.8, size/10)      // plate
     
     // var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
 
