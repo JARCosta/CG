@@ -30,6 +30,10 @@ let feetUp = false;
     headDown = false;
     armsOut = false;
     armsIn = false;
+    trailerForward = false;
+    trailerBackwards = false;
+    trailerRight = false;
+    trailerLeft = false;
 
 var collided, animating; 
 
@@ -634,8 +638,26 @@ function animate() {
         }
     }
 
+    if(!collided){
+        if(trailerForward){
+            trailer.position.z += 20 * delta;
+        }
+    
+        if(trailerLeft){
+            trailer.position.x += 20 * delta;
+        }
+    
+        if(trailerRight){
+            trailer.position.x -= 20 * delta;
+        }
 
-  
+    }
+
+
+    if(trailerBackwards){
+        trailer.position.z -= 20 * delta;
+    }
+
 
     checkCollisions();
 
@@ -742,17 +764,17 @@ function onKeyDown(e) {
         feetDown = true;
     break;
     // arrow keys
-    case 37: //left
-        trailer.position.x -= 20 * delta;
+    case 37: //right
+        trailerRight = true;
         break;
-    case 38: //up
-        trailer.position.z -= 20 * delta;
+    case 38: //backwards
+        trailerBackwards = true;
         break;
-    case 39: //right
-        trailer.position.x += 20 * delta;
+    case 39: //left
+        trailerLeft = true;
         break;
-    case 40: //down
-        trailer.position.z += 20 * delta;
+    case 40: //forward
+        trailerForward = true;
         break;
     
     }
@@ -825,17 +847,17 @@ function onKeyUp(e){
     feetDown = false;
     // arrow keys
     break;
-    case 37: //left
-        trailer.position.x -= 20 * delta;
+    case 37: //righ
+        trailerRight = false;
         break;
-    case 38: //up
-        trailer.position.z -= 20 * delta;
+    case 38: //backwards
+        trailerBackwards = false;
         break;
-    case 39: //right
-        trailer.position.x += 20 * delta;
+    case 39: //left
+        trailerLeft = false;
         break;
-    case 40: //down
-        trailer.position.z += 20 * delta;
+    case 40: //forward
+        trailerForward = false;
         break;
     
     }
