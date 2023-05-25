@@ -14,9 +14,11 @@ var slow = 0,  fast = 0;
 var arms = [], legs = [], head, feet = [];
 var couplings = [];
 
-var close;
+var close, delta;
 
+var clock = new THREE.Clock();
 
+var robot, trailer;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -33,8 +35,8 @@ function createScene() {
 
     rotate = false;
     close = false;
-    createRobot(0, 5, 10, 10);
-    createTrailer(0, 5, 10, 10);
+    robot = createRobot(0, 5, 10, 10);
+    trailer = createTrailer(0, 5, -20, 10);
 }
 
 //////////////////////
@@ -225,7 +227,7 @@ function addFoot(obj, x, y, z, size) {
     var material  = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: wireframe_bool });
     createBall(foot, material,       0, 0, 0,             size/4);                                 // center
 
-    createCube(foot, material,       0, size*0.5, -size*0.875,            size*1.25, size*1, size*1.75);                      // foot
+    createCube(foot, material,       0, -size*0.5, -size*0.375,            size*1.25, size*1, size*0.75);                      // foot
 
     foot.position.set(x, y, z);
     foot.rotation.x = -Math.PI/2;
@@ -259,8 +261,8 @@ function addLegs(robot, x, y, z, size) {
     addTire(leg, -size*1.6, -size*1.35, -size*4, size);                                                     // right wheel
     addTire(leg, -size*1.6, -size*1.35, -size*2.5, size);                                                   // right wheel
 
-    addFoot(leg,  size*0.75, size*0.25, -size*5, size);
-    addFoot(leg, -size*0.75, size*0.25, -size*5, size);
+    addFoot(leg,  size*0.75, -size*0.55, -size*5, size);
+    addFoot(leg, -size*0.75, -size*0.55, -size*5, size);
     
     leg.position.set(x, y, z);
     leg.rotateX(-Math.PI/2);
@@ -328,16 +330,17 @@ function createTrailer(x, y, z, size) {
     var trailer = new THREE.Object3D();
     
     var material = new THREE.MeshBasicMaterial({ color: 0x0000A0, wireframe: wireframe_bool });
-    createCube(trailer, material, x, y+size*1.3, -z-size*5, size*3, size*3, size*10); 
+    createCube(trailer, material, 0, size*1.75, -size*5, size*3, size*3, size*10); 
     var material = new THREE.MeshBasicMaterial({ color: 0x000088, wireframe: wireframe_bool }); 
-    createCube(trailer, material, x, y-size*0.85, -z-size*8, size*2.75 /*right size - dont touch*/, size*1.3, size*3);
+    createCube(trailer, material, 0, -size*0.25, -size*8, size*2.75 , size*1.3, size*3);
 
-    addTire(trailer, size*1.6, -size*1.85, -size*8.25, size);                                                     // left wheel
-    addTire(trailer, size*1.6, -size*1.85, -size*9.75, size);                                                   // left wheel
+    addTire(trailer, size*1.6, -size*1.85, -size*7.25, size);                                                     // left wheel
+    addTire(trailer, size*1.6, -size*1.85, -size*9.00, size);                                                   // left wheel
               
-    addTire(trailer, -size*1.6, -size*1.85, -size*8.25, size);                                                     // right wheel
-    addTire(trailer, -size*1.6, -size*1.85, -size*9.75, size);                                                   // right wheel
+    addTire(trailer, -size*1.6, -size*1.85, -size*7.25, size);                                                     // right wheel
+    addTire(trailer, -size*1.6, -size*1.85, -size*9.00, size);                                                   // right wheel
 
+    addCoupling(trailer, 0, 0, 0, size);
 
     trailer.position.set(x, y, z);
 
@@ -366,7 +369,7 @@ function handleCollisions(){
 ////////////
 function update(){
     'use strict';
-
+    delta = clock.getDelta();
     // if(clock.getdelta >= 10/0.001)
     //    atualiza
 
@@ -387,7 +390,6 @@ function render() {
 function init() {
     'use strict';
 
-    // cloxk = new
 
     renderer = new THREE.WebGLRenderer({
         antialias: true
@@ -415,7 +417,7 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
-
+    delta = clock.getDelta();
     render();
 
     requestAnimationFrame(animate);
@@ -462,29 +464,26 @@ function onKeyDown(e) {
         close = !close;
         break;
 
-    
-    // velocidade = delta
-
     // ARMS
     case 69: //E
     case 101: //e
-        // console.log(arms[0].position.x);
+        console.log(arms[0].position.x);
         for(var i = 0; i < arms.length; i++) {
             var pos_abs = Math.abs(arms[i].position.x);
             var pos_sig = arms[i].position.x/pos_abs;
             if(pos_abs < 20) {
-                arms[i].position.x += 0.2 * pos_sig;
+                arms[i].position.x += 10 * pos_sig * delta;
             }
         }
         break;
     case 68: //D
     case 100: //d
-        // console.log(arms[0].position.x);
+        console.log(arms[0].position.x);
         for(var i = 0; i < arms.length; i++) {
             var pos_abs = Math.abs(arms[i].position.x);
             var pos_sig = arms[i].position.x/pos_abs;
             if(pos_abs > 10) {
-                arms[i].position.x -= 0.2 * pos_sig;
+                arms[i].position.x -= 10 * pos_sig * delta;
             }
         }
         break;
@@ -492,30 +491,32 @@ function onKeyDown(e) {
     // HEAD
     case 82: //R
     case 114: //r
-        // console.log(head.rotation.x);
+        console.log(head.rotation.x);
         if(head.rotation.x < 0) {
-            head.rotation.x += 0.05;
+            head.rotation.x += 1 * delta;
         }
         else {
             head.rotation.x = 0;
         }
         break;
-        case 70: //F
-        case 102: //f
-        // console.log(head.rotation.x);
+    case 70: //F
+    case 102: //f
+        console.log(head.rotation.x);
         if(head.rotation.x > -Math.PI/2) {
-            head.rotation.x -= 0.05;
+            head.rotation.x -= 1 * delta;
         }
         else {
             head.rotation.x = -Math.PI/2;
         }
         break;
+
+    // LEGS
     case 87: //W
     case 119: //w
+        console.log(legs[0].rotation.x);
         for(var i = 0; i < legs.length; i++) {
-            console.log(legs[i].rotation.x);
             if(legs[i].rotation.x - 0.05 > -Math.PI/2) {
-                legs[i].rotation.x -= 0.05;
+                legs[i].rotation.x -= 2 * delta;
             }
             else {
                 legs[i].rotation.x = -Math.PI/2;
@@ -524,22 +525,24 @@ function onKeyDown(e) {
         break;
     case 83: //S
     case 115: //s
+        console.log(legs[0].rotation.x);
         for(var i = 0; i < legs.length; i++) {
-            console.log(legs[i].rotation.x);
             if(legs[i].rotation.x + 0.05 < 0) {
-                legs[i].rotation.x += 0.05;
+                legs[i].rotation.x += 2 * delta;
             }
             else {
                 legs[i].rotation.x = 0;
             }
         }
         break;
+
+    // FEET
     case 81: //Q
     case 113: //q
         for(var i = 0; i < feet.length; i++) {
             console.log(feet[i].rotation.x);
             if(feet[i].rotation.x - 0.05 > -Math.PI/2) {
-                feet[i].rotation.x -= 0.05;
+                feet[i].rotation.x -= 1 * delta;
             }
             else {
                 feet[i].rotation.x = -Math.PI/2;
@@ -550,14 +553,29 @@ function onKeyDown(e) {
     case 97: //a
         for(var i = 0; i < feet.length; i++) {
             console.log(feet[i].rotation.x);
-            if(feet[i].rotation.x + 0.05 < 0) {
-                feet[i].rotation.x += 0.05;
+            if(feet[i].rotation.x + 0.05 < Math.PI/2) {
+                feet[i].rotation.x += 1 * delta;
             }
             else {
-                feet[i].rotation.x = 0;
+                feet[i].rotation.x = Math.PI/2;
             }
         }
-}
+    
+    // arrow keys
+    case 37: //left
+        trailer.position.x -= 20 * delta;
+        break;
+    case 38: //up
+        trailer.position.z -= 20 * delta;
+        break;
+    case 39: //right
+        trailer.position.x += 20 * delta;
+        break;
+    case 40: //down
+        trailer.position.z += 20 * delta;
+        break;
+    
+    }
 }
 
 ///////////////////////
