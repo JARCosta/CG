@@ -172,6 +172,9 @@ function addChest(robot, x, y, z, size) {
     createCube(chest, material, x, y+size*0.5, z-size*1.5, size, size*2, size);                // back
     var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
     createCube(chest, material, x, y-size*0.75, z+size+size/10, size*1.25, size/1.8, size/10)      // plate
+    var material = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: wireframe_bool });
+    createCube(chest, material, x-size, y-size*0.75, z+size+size/10, size/1.8, size/1.8, size/10)      // light
+    createCube(chest, material, x+size, y-size*0.75, z+size+size/10, size/1.8, size/1.8, size/10)      // light
     
     addCoupling(chest, x, y-size*0.25, z-size*2, size);
     // var material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: wireframe_bool });
