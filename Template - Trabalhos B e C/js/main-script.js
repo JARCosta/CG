@@ -20,6 +20,16 @@ var clock = new THREE.Clock();
 
 var robot, trailer;
 
+let feetUp = false;
+    feetDown = false;
+    legsUp = false;
+    legsDown = false;
+    headUp = false;
+    headDown = false;
+    armsOut = false;
+    armsIn = false;
+
+
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -409,6 +419,7 @@ function init() {
     render();
 
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
 }
 
@@ -417,6 +428,122 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+
+    if(armsOut){
+        console.log(arms[0].position.x);
+        for(var i = 0; i < arms.length; i++) {
+            var pos_abs = Math.abs(arms[i].position.x);
+            var pos_sig = arms[i].position.x/pos_abs;
+            if(pos_abs < 20) {
+                arms[i].position.x += 10 * pos_sig * delta;
+            }
+        } 
+    }
+
+    if(armsIn){
+        console.log(arms[0].position.x);
+        for(var i = 0; i < arms.length; i++) {
+            var pos_abs = Math.abs(arms[i].position.x);
+            var pos_sig = arms[i].position.x/pos_abs;
+            if(pos_abs > 10) {
+                arms[i].position.x -= 10 * pos_sig * delta;
+            }
+        }
+    }
+
+    if(headDown){
+        console.log(head.rotation.x);
+        if(head.rotation.x > -Math.PI/2) {
+            head.rotation.x -= 1 * delta;
+        }
+        else {
+            head.rotation.x = -Math.PI/2;
+        }
+
+    }
+
+    if(headUp){
+        console.log(head.rotation.x);
+        if(head.rotation.x < 0) {
+            head.rotation.x += 1 * delta;
+        }
+        else {
+            head.rotation.x = 0;
+        }
+    }
+
+    if(feetUp){
+
+        
+        for(var i = 0; i < feet.length; i++) {
+            console.log(feet[i].rotation.x);
+            if(feet[i].rotation.x - 0.05 > -Math.PI/2) {
+                feet[i].rotation.x -= 1 * delta;
+            }
+            else {
+                feet[i].rotation.x = -Math.PI/2;
+            }
+        }
+
+    }
+
+    if(feetDown){
+
+        for(var i = 0; i < feet.length; i++) {
+            console.log(feet[i].rotation.x);
+            if(feet[i].rotation.x + 0.05 < Math.PI/2) {
+                feet[i].rotation.x += 1 * delta;
+            }
+            else {
+                feet[i].rotation.x = Math.PI/2;
+            }
+        }
+
+    }
+
+    if(legsDown){
+        console.log(legs[0].rotation.x);
+        for(var i = 0; i < legs.length; i++) {
+            if(legs[i].rotation.x - 0.05 > -Math.PI/2) {
+                legs[i].rotation.x -= 2 * delta;
+            }
+            else {
+                legs[i].rotation.x = -Math.PI/2;
+            }
+        }
+    }
+
+    if(legsUp){
+        console.log(legs[0].rotation.x);
+        for(var i = 0; i < legs.length; i++) {
+            if(legs[i].rotation.x + 0.05 < 0) {
+                legs[i].rotation.x += 2 * delta;
+            }
+            else {
+                legs[i].rotation.x = 0;
+            }
+        }
+    }
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     delta = clock.getDelta();
     render();
 
@@ -467,6 +594,90 @@ function onKeyDown(e) {
     // ARMS
     case 69: //E
     case 101: //e
+    armsOut = true;
+        break;
+    case 68: //D
+    case 100: //d
+    armsIn = true;
+        break;
+
+    // HEAD
+    case 82: //R
+    case 114: //r
+    headUp = true;
+        break;
+    case 70: //F
+    case 102: //f
+    headDown = true;
+        break;
+
+    // LEGS
+    case 87: //W
+    case 119: //w
+    legsDown = true;
+        break;
+    case 83: //S
+    case 115: //s
+    legsUp = true;
+        break;
+
+    // FEET
+    case 81: //Q
+    case 113: //q
+    feetUp = true;
+        break;
+    case 65: //A
+    case 97: //a
+    feetDown = true;
+    break;
+    // arrow keys
+    case 37: //left
+        trailer.position.x -= 20 * delta;
+        break;
+    case 38: //up
+        trailer.position.z -= 20 * delta;
+        break;
+    case 39: //right
+        trailer.position.x += 20 * delta;
+        break;
+    case 40: //down
+        trailer.position.z += 20 * delta;
+        break;
+    
+    }
+}
+
+///////////////////////
+/* KEY UP CALLBACK */
+///////////////////////
+function onKeyUp(e){
+    'use strict';
+
+    switch (e.keyCode) {
+    case 49: //1
+        camera = cameras[0];
+        break;
+    case 50: //2
+        camera = cameras[1];
+        break;
+    case 51: //3
+        camera = cameras[2];
+        break;
+    case 52: //4
+        camera = cameras[3];
+        break;
+    case 53: //5
+        camera = cameras[4];
+        break;
+    case 67: //C
+    case 99: //c
+        close = !close;
+        break;
+
+    // ARMS
+    case 69: //E
+    case 101: //e
+    armsOut = false;
         console.log(arms[0].position.x);
         for(var i = 0; i < arms.length; i++) {
             var pos_abs = Math.abs(arms[i].position.x);
@@ -478,6 +689,7 @@ function onKeyDown(e) {
         break;
     case 68: //D
     case 100: //d
+    armsIn = false;
         console.log(arms[0].position.x);
         for(var i = 0; i < arms.length; i++) {
             var pos_abs = Math.abs(arms[i].position.x);
@@ -491,6 +703,8 @@ function onKeyDown(e) {
     // HEAD
     case 82: //R
     case 114: //r
+    headUp = false;
+
         console.log(head.rotation.x);
         if(head.rotation.x < 0) {
             head.rotation.x += 1 * delta;
@@ -501,6 +715,8 @@ function onKeyDown(e) {
         break;
     case 70: //F
     case 102: //f
+    headDown = false;
+
         console.log(head.rotation.x);
         if(head.rotation.x > -Math.PI/2) {
             head.rotation.x -= 1 * delta;
@@ -513,6 +729,8 @@ function onKeyDown(e) {
     // LEGS
     case 87: //W
     case 119: //w
+    legsDown = false;
+
         console.log(legs[0].rotation.x);
         for(var i = 0; i < legs.length; i++) {
             if(legs[i].rotation.x - 0.05 > -Math.PI/2) {
@@ -525,6 +743,8 @@ function onKeyDown(e) {
         break;
     case 83: //S
     case 115: //s
+    legsUp = false;
+
         console.log(legs[0].rotation.x);
         for(var i = 0; i < legs.length; i++) {
             if(legs[i].rotation.x + 0.05 < 0) {
@@ -539,6 +759,8 @@ function onKeyDown(e) {
     // FEET
     case 81: //Q
     case 113: //q
+    feetUp = false;
+
         for(var i = 0; i < feet.length; i++) {
             console.log(feet[i].rotation.x);
             if(feet[i].rotation.x - 0.05 > -Math.PI/2) {
@@ -551,6 +773,8 @@ function onKeyDown(e) {
         break;
     case 65: //A
     case 97: //a
+    feetDown = false;
+
         for(var i = 0; i < feet.length; i++) {
             console.log(feet[i].rotation.x);
             if(feet[i].rotation.x + 0.05 < Math.PI/2) {
@@ -576,12 +800,5 @@ function onKeyDown(e) {
         break;
     
     }
-}
-
-///////////////////////
-/* KEY UP CALLBACK */
-///////////////////////
-function onKeyUp(e){
-    'use strict';
 
 }
