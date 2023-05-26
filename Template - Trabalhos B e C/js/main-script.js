@@ -527,7 +527,7 @@ function animate() {
     'use strict';
     // console.log(collided);
 
-    if(armsOut){
+    if(armsOut && !(collided && !stable)){
         // console.log(arms[0].position.x);
         for(var i = 0; i < arms.length; i++) {
             var pos_abs = Math.abs(arms[i].position.x);
@@ -563,7 +563,7 @@ function animate() {
 
     }
 
-    if(headUp){
+    if(headUp && !(collided && !stable)){
         // console.log(head.rotation.x);
         if(head.rotation.x < 0) {
             head.rotation.x += 1 * delta;
@@ -573,7 +573,7 @@ function animate() {
         }
     }
 
-    if(feetUp){
+    if(feetUp && !(collided && !stable)){
 
         
         for(var i = 0; i < feet.length; i++) {
@@ -602,7 +602,7 @@ function animate() {
 
     }
 
-    if(legsDown){
+    if(legsDown && !(collided && !stable)){
         // console.log(legs[0].rotation.x);
         for(var i = 0; i < legs.length; i++) {
             if(legs[i].rotation.x - 0.05 > -Math.PI/2) {
