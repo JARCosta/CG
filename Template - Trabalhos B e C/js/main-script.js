@@ -35,7 +35,7 @@ let feetUp = false;
     trailerRight = false;
     trailerLeft = false;
 
-var collided, animating; 
+var collided, animating, stable; 
 
 
 /////////////////////
@@ -55,8 +55,9 @@ function createScene() {
     close = false;
     collided = false;
     animating = false;
+    stable = false;
     robot = createRobot(0, 5, 10, 10);
-    trailer = createTrailer(0, 5, -20, 10);
+    trailer = createTrailer(0, 5, -50, 10);
 }
 
 //////////////////////
@@ -386,23 +387,19 @@ function checkCollisions(){
     // console.log(couplings[0].children[0]);
     var parent_pos_1 = couplings[0].parent.position;
     var child_size_1 = couplings[0].children[0].geometry.parameters;
-    var min_x_1 = parent_pos_1.x - child_size_1.width/2;
-    var max_x_1 = parent_pos_1.x + child_size_1.width/2;
-    var min_y_1 = parent_pos_1.y - child_size_1.height/2;
-    var max_y_1 = parent_pos_1.y + child_size_1.height/2;
-    var min_z_1 = parent_pos_1.z - child_size_1.depth/2;
-    var max_z_1 = parent_pos_1.z + child_size_1.depth/2;
+    var min_x_1 = parent_pos_1.x - (child_size_1.width/2 * 8);
+    var max_x_1 = parent_pos_1.x + (child_size_1.width/2 * 8);
+    var min_z_1 = parent_pos_1.z - (child_size_1.depth/2 * 16);
+    var max_z_1 = parent_pos_1.z + (child_size_1.depth/2 * 1);
     
     var parent_pos_2 = couplings[1].parent.position;
     var child_size_2 = couplings[1].children[0].geometry.parameters;
-    var min_x_2 = parent_pos_2.x - (child_size_2.width/2 * 4);
-    var max_x_2 = parent_pos_2.x + (child_size_2.width/2 * 4);
-    var min_y_2 = parent_pos_2.y - (child_size_2.height/2 * 4);
-    var max_y_2 = parent_pos_2.y + (child_size_2.height/2 * 4);
-    var min_z_2 = parent_pos_2.z - (child_size_2.depth/2 * 4);
-    var max_z_2 = parent_pos_2.z + (child_size_2.depth/2 * 4);
+    var min_x_2 = parent_pos_2.x - child_size_2.width/2;
+    var max_x_2 = parent_pos_2.x + child_size_2.width/2;
+    var min_z_2 = parent_pos_2.z - child_size_2.depth/2;
+    var max_z_2 = parent_pos_2.z + child_size_2.depth/2;
 
-    if (max_x_1 >= min_x_2 && min_x_1 <= max_x_2 && max_y_1 >= min_y_2 && min_y_1 <= max_y_2 && max_z_1 >= min_z_2 && min_z_1 <= max_z_2) {
+    if (max_x_1 >= min_x_2 && min_x_1 <= max_x_2 && max_z_1 >= min_z_2 && min_z_1 <= max_z_2) {
         if  (collided == false){
             if (isTruckMode() == true){
                 // console.log("collided");
@@ -419,6 +416,7 @@ function checkCollisions(){
         if (collided == true){
             // console.log("descollided");
             collided = false;
+            stable = false;
         }
     }
 }
@@ -471,18 +469,8 @@ function isTruckMode(){
 ///////////////////////
 /* HANDLE COLLISIONS */
 ///////////////////////
-function handleCollisions(x,z){
+function handleCollisions(){
     'use strict';
-
-    console.log(x, z);
-    
-    for ( var i = 0; i < 100; i++){
-        animating = true;
-        trailer.position.x += x/100;
-        trailer.position.z += z/100;
-        render();
-        // console.log(trailer.position.x, trailer.position.z);
-    }
 
 }
 
@@ -658,6 +646,22 @@ function animate() {
         trailer.position.z -= 20 * delta;
     }
 
+    var parent_pos_1 = couplings[0].parent.position;
+    var parent_pos_2 = couplings[1].parent.position;
+    
+    
+    if(collided && !stable/* && n estiverem na mm posi*/) {
+        var mov_x = (parent_pos_1.x-parent_pos_2.x)/20;
+        var mov_z = (parent_pos_1.z-parent_pos_2.z)/20;
+        // console.log(mov_x, mov_z, stable);
+        if (mov_x < 0.05 && mov_z < 0.05) {
+            stable = true;
+        }
+        parent_pos_2.x += mov_x;
+        parent_pos_2.z += mov_z;
+        // calcular distancia entre os dois
+        // mover 1/100 da distancia
+    }
 
     checkCollisions();
 
@@ -714,7 +718,7 @@ function onKeyDown(e) {
     wireframe_bool = !wireframe_bool;
     
     for(var i = 0; i < object.length; i++){
-        console.log(object[i]);
+        // console.log(object[i]);
         object[i].material.wireframe = wireframe_bool; 
     }
 
