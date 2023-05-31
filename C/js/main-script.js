@@ -47,7 +47,7 @@ function createScene() {
     axisHelper.visible = true;
     scene.add(axisHelper);
   
-    createHouse(0, 0, 0, 15);
+    createHouse(0, 0, 0, 10);
   }
   
 
@@ -60,12 +60,17 @@ function createCamera() {
     
     var temp;
     
+    temp = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000);
+    temp.position.set(0, 100, 0);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
     temp.position.set(50, 50, 50);
     temp.lookAt(scene.position);
     cameras.push(temp);
 
-    temp = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000);
+    temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(50, 50, 50);
     temp.lookAt(scene.position);
     cameras.push(temp);
@@ -143,15 +148,106 @@ function createCone(obj, material, x, y, z, diameter, height, rotation) {
     return cone;
 }
 
-
 function createHouse(x, y, z, size) {
     'use strict';
 
     house = new THREE.Object3D();
+    
+    ///////////////////////
+    /* CREATE HOUSE WALLS */
+    ///////////////////////
+    const vertices = new Float32Array([
+        // base
+        -size*2.5   , -size         , -size,
+        -size*2.5       , -size         , size,
+        size*2.5        , -size         , -size,
+        size*2.5        , -size         , size,
 
+        // those who touch the roof
+        -size*2.5       , size          , -size,
+        -size*2.5       , size          , size,
+        size*2.5        , size          , -size,
+        size*2.5        , size          , size,
+        
+        // roof
+        size*2.5            , size*1.5      , 0,
+        -size*2.5           , size*1.5      , 0
+    ]);
+
+    const indices = [
+        // left wall
+        0, 1, 4,
+        4, 1, 5,
+
+        // right wall
+        6, 3, 2,
+        7, 3, 6,
+
+        // back wall
+        6, 2, 0,
+        4, 6, 0,
+
+        // front wall
+        1, 3, 7,
+        5, 1, 7,
+
+        // left roof
+        4, 5, 9,
+
+        // right roof
+        6, 8, 7
+
+    ];
+
+    geometry = new THREE.BufferGeometry();
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    geometry.setIndex( indices );
+    
     var material = new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe_bool });
+    
+    mesh = new THREE.Mesh(geometry, material);
 
-    createCilinder(house, material, 0, 0, 0, size, size, false);
+    house.add(mesh);
+    objects.push(mesh);
+
+    ///////////////////////
+    /* CREATE HOUSE ROOF */
+    ///////////////////////
+    const vertices2 = new Float32Array([
+        // those who touch the roof
+        -size*2.5       , size          , -size,
+        -size*2.5       , size          , size,
+        size*2.5        , size          , -size,
+        size*2.5        , size          , size,
+
+        // roof
+        size*2.5            , size*1.5      , 0,
+        -size*2.5           , size*1.5      , 0
+    ]);
+
+    const indices2 = [
+        // front roof
+        5, 1, 4,
+        4, 1, 3,
+
+        // back roof
+        2, 0, 4,
+        4, 0, 5,
+        
+
+        
+
+    ];
+
+    geometry = new THREE.BufferGeometry();
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices2, 3 ) );
+    geometry.setIndex( indices2 );
+
+    var material = new THREE.MeshBasicMaterial({ color: 0x662222, wireframe: wireframe_bool });
+    mesh = new THREE.Mesh(geometry, material);
+
+    house.add(mesh);
+    objects.push(mesh);
 
     house.position.set(x, y, z);
     scene.add(house);
@@ -239,6 +335,10 @@ function animate() {
     //         // moving_obj[i].position.z = 50 * (Math.cos(slow + i * 2 * pi / moving_obj.length));
     //     }
     // }
+    
+    // rotate house
+    house.rotation.y += 0.025;
+
     render();
 
     requestAnimationFrame(animate);
@@ -272,6 +372,19 @@ function onKeyDown(e) {
             objects[i].material.wireframe = wireframe_bool; 
         }
         break;
+    case 49: //1
+        camera = cameras[0];
+        break;
+    case 50: //2
+        camera = cameras[1];
+        break;
+    case 51: //3
+        camera = cameras[2];
+        break;
+    case 52: //4
+        camera = cameras[3];
+        break;
+
     }
 }
 
