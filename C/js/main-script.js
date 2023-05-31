@@ -12,7 +12,7 @@ var slow = 0,  fast = 0;
 
 var clock = new THREE.Clock(), delta;
 
-var house;
+var house, ovni, subreiro;
 
 
 
@@ -47,7 +47,13 @@ function createScene() {
     axisHelper.visible = true;
     scene.add(axisHelper);
   
-    createHouse(0, 0, 0, 10);
+    var size = 10;
+    createHouse(0, 0, 0, size);
+    createOVNI(0, size * 6, 0, 10);
+    createSubreiro(size * 6, 0, 0, size);
+    createSubreiro(-size * 6, 0, 0, size);
+    createSubreiro(0, 0, size * 6, size);
+    createSubreiro(0, 0, -size * 6, size);
   }
   
 
@@ -60,18 +66,18 @@ function createCamera() {
     
     var temp;
     
-    temp = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(0, 100, 0);
+    temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    temp.position.set(0, 150, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
-
+    
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
-    temp.position.set(50, 50, 50);
+    temp.position.set(150, 150, 150);
     temp.lookAt(scene.position);
     cameras.push(temp);
 
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(50, 50, 50);
+    temp.position.set(150, 150, 150);
     temp.lookAt(scene.position);
     cameras.push(temp);
 
@@ -115,8 +121,7 @@ function createCilinder(obj, material, x, y, z, diameter, height, rotation) {
     cilinder.userData = { jumping: true, step: 0 };
 
     geometry = new THREE.CylinderGeometry(diameter/2, diameter/2, height/2, 16);
-    if (rotation)
-        cilinder.rotation.z = 0.5*Math.PI;
+    cilinder.rotation.z = rotation;
     mesh = new THREE.Mesh(geometry, material);
 
     cilinder.add(mesh);
@@ -387,6 +392,58 @@ function createHouse(x, y, z, size) {
     scene.add(house);
 }
 
+function createOVNI(x, y, z, size) {
+    'use strict';
+
+    ovni = new THREE.Object3D();
+
+    geometry = new THREE.SphereGeometry(size, 32, 32);
+
+
+
+    var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    mesh = new THREE.Mesh(geometry, material);
+    
+    mesh.scale.set(1, 0.5, 1);
+
+    mesh.position.set(x, y, z);
+    ovni.add(mesh);
+    objects.push(mesh);
+
+
+    // ovni.position.set(x, y, z);
+    scene.add(ovni);
+}
+
+
+function createSubreiro(x, y, z, size) {
+    'use strict';
+
+    subreiro = new THREE.Object3D();
+
+    // geometry = new THREE.CylinderGeometry(size, size, size*2, 32);
+    material = new THREE.MeshBasicMaterial({ color: 0x8b4513, wireframe: wireframe_bool });
+    // mesh = new THREE.Mesh(geometry, material);
+
+    // mesh.position.set(x, y, z);
+    // subreiro.add(mesh);
+    // objects.push(mesh);
+
+    createCilinder(subreiro, material, 0, 0, 0, size*1, size*5, Math.PI/16);
+    createCilinder(subreiro, material, size*0.5, size*1.5, 0, size*0.75, size*3, Math.PI/16 - Math.PI/4);
+    createCilinder(subreiro, material, -size*0.5, size*1.5, 0, size*0.75, size*3, Math.PI/16 + Math.PI/8);
+
+    material = new THREE.MeshBasicMaterial({ color: 0x004400, wireframe: wireframe_bool });
+    createBall(subreiro, material, size*1.75, size*3, 0, size*2.5);
+    createBall(subreiro, material, -size*1.75, size*3, 0, size*2.5);
+
+    // var material = new THREE.MeshBasicMaterial({ color: 0x006400, wireframe: wireframe_bool });
+
+    subreiro.position.set(x, y, z);
+    scene.add(subreiro);
+}
+
+
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
@@ -471,7 +528,7 @@ function animate() {
     // }
     
     // rotate house
-    house.rotation.y += 0.01;
+    scene.rotation.y += 0.01;
 
     render();
 
