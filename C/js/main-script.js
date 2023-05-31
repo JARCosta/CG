@@ -148,30 +148,63 @@ function createCone(obj, material, x, y, z, diameter, height, rotation) {
     return cone;
 }
 
-function createHouse(x, y, z, size) {
+function addWalls(obj, x, y, z, size) {
     'use strict';
 
-    house = new THREE.Object3D();
-    
-    ///////////////////////
-    /* CREATE HOUSE WALLS */
-    ///////////////////////
+    var window_height = size/2;
+
     const vertices = new Float32Array([
         // base
-        -size*2.5   , -size         , -size,
-        -size*2.5       , -size         , size,
-        size*2.5        , -size         , -size,
-        size*2.5        , -size         , size,
+        -size*2.5       ,-size         ,-size,                          // down left away      0
+        -size*2.5       ,-size         , size,                          // down left close     1
+         size*2.5       ,-size         ,-size,                          // down right away     2
+         size*2.5       ,-size         , size,                          // down right close    3
 
         // those who touch the roof
-        -size*2.5       , size          , -size,
-        -size*2.5       , size          , size,
-        size*2.5        , size          , -size,
-        size*2.5        , size          , size,
+        -size*2.5       , size         ,-size,                          // up left away        4
+        -size*2.5       , size         , size,                          // up left close       5
+         size*2.5       , size         ,-size,                          // up right away       6
+         size*2.5       , size         , size,                          // up right close      7
         
         // roof
-        size*2.5            , size*1.5      , 0,
-        -size*2.5           , size*1.5      , 0
+         size*2.5       , size*1.5     , 0,                             // right               8
+        -size*2.5       , size*1.5     , 0,                             // left                9
+
+        // door frame
+        -size*0.5       ,-size         , size,                          // down left           10
+        -size*0.5       , size         , size,                          // up left             11
+         size*0.5       ,-size         , size,                          // down right          12
+         size*0.5       , size         , size,                          // up right            13
+
+        // wall over the door
+         size*0.5       , size*0.6   , size,                            // down left           14
+        -size*0.5       , size*0.6   , size,                            // down right          15
+
+        // right window
+        1.5*size-size*0.35       ,-size*0.35   , size,                  // down left           16
+        1.5*size+size*0.35       ,-size*0.35   , size,                  // down right          17
+        1.5*size-size*0.35       , size*0.35   , size,                  // up left             18
+        1.5*size+size*0.35       , size*0.35   , size,                  // up right            19
+
+        // right window frame
+        1.5*size-size*0.35       ,-size*1   , size,                     // down left           20
+        1.5*size+size*0.35       ,-size*1   , size,                     // down right          21
+        1.5*size-size*0.35       , size*1   , size,                     // down left           22
+        1.5*size+size*0.35       , size*1   , size,                     // down right          23
+
+
+        // left window
+        -1.5*size-size*0.35       ,-size*0.35   , size,                 // down left           24
+        -1.5*size+size*0.35       ,-size*0.35   , size,                 // down right          25
+        -1.5*size-size*0.35       , size*0.35   , size,                 // up left             26
+        -1.5*size+size*0.35       , size*0.35   , size,                 // up right            27
+
+        // left window frame
+        -1.5*size-size*0.35       ,-size*1   , size,                    // down left           28
+        -1.5*size+size*0.35       ,-size*1   , size,                    // down right          29
+        -1.5*size-size*0.35       , size*1   , size,                    // up left             30
+        -1.5*size+size*0.35       , size*1   , size,                    // up right            31
+
     ]);
 
     const indices = [
@@ -188,14 +221,50 @@ function createHouse(x, y, z, size) {
         4, 6, 0,
 
         // front wall
-        1, 3, 7,
-        5, 1, 7,
+            // door left
+                // window right
+                    // 1, 10, 11,
+                    // 5, 1, 11,
+                    10, 31, 29,
+                    11, 31, 10,
+                // window left
+                    5, 1, 30,
+                    1, 28, 30,
+                // window top
+                    31, 26, 27,
+                    31, 30, 26,
+                // window bottom
+                    28, 29, 24,
+                    29, 25, 24,
+        
+            // door right
+                // window right
+                    3, 23, 21,
+                    7, 23, 3,
+                // window left
+                    13, 12, 22,
+                    12, 20, 22,
+                // window top
+                    20, 21, 16,
+                    16, 21, 17,
+                // window bottom
+                    23, 22, 18,
+                    23, 18, 19,
 
         // left roof
         4, 5, 9,
 
         // right roof
-        6, 8, 7
+        6, 8, 7,
+
+        // wall over the door
+        15, 14, 13,
+        15, 13, 11,
+
+        // window
+        // 16, 17, 19,
+        // 16, 19, 18,
+
 
     ];
 
@@ -207,12 +276,16 @@ function createHouse(x, y, z, size) {
     
     mesh = new THREE.Mesh(geometry, material);
 
-    house.add(mesh);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
     objects.push(mesh);
 
-    ///////////////////////
-    /* CREATE HOUSE ROOF */
-    ///////////////////////
+    return mesh;
+}
+
+function addRoof(obj, x, y, z, size) {
+    'use strict';
+
     const vertices2 = new Float32Array([
         // those who touch the roof
         -size*2.5       , size          , -size,
@@ -234,9 +307,6 @@ function createHouse(x, y, z, size) {
         2, 0, 4,
         4, 0, 5,
         
-
-        
-
     ];
 
     geometry = new THREE.BufferGeometry();
@@ -246,8 +316,72 @@ function createHouse(x, y, z, size) {
     var material = new THREE.MeshBasicMaterial({ color: 0x662222, wireframe: wireframe_bool });
     mesh = new THREE.Mesh(geometry, material);
 
-    house.add(mesh);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
     objects.push(mesh);
+
+    return mesh;
+}
+
+function addWindow( obj, x, y, z, size ) {
+    'use strict';
+
+    const vertices3 = new Float32Array([
+        // left window
+        -size*1.5+size*0.35       ,-size*0.35   , size,                 // down left           0
+        -size*1.5+size*0.35       , size*0.35   , size,                 // up left             1
+        -size*1.5-size*0.35       ,-size*0.35   , size,                 // down left           2
+        -size*1.5-size*0.35       , size*0.35   , size,                 // up left             3
+
+        // right window
+        size*1.5+size*0.35        ,-size*0.35   , size,                 // down right          4
+        size*1.5+size*0.35        , size*0.35   , size,                 // up right            5
+        size*1.5-size*0.35        ,-size*0.35   , size,                 // down right          6
+        size*1.5-size*0.35        , size*0.35   , size,                 // up right            7
+
+        // door
+        +size*0.5       ,-size*1   , size,                              // down left           8
+        +size*0.5       , size*0.6   , size,                            // up left             9
+        -size*0.5       ,-size*1   , size,                              // down left           10
+        -size*0.5       , size*0.6   , size,                            // up left             11
+    ]);
+
+    const indices3 = [
+        // left window
+        0, 1, 3,
+        0, 3, 2,
+
+        // right window
+        4, 5, 7,
+        4, 7, 6,
+
+        // door
+        8, 9, 11,
+        8, 11, 10,
+    ];
+
+    geometry = new THREE.BufferGeometry();
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices3, 3 ) );
+    geometry.setIndex( indices3 );
+
+    var material = new THREE.MeshBasicMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
+    mesh = new THREE.Mesh(geometry, material);
+    
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
+    objects.push(mesh);
+
+    return mesh;
+}
+
+function createHouse(x, y, z, size) {
+    'use strict';
+
+    house = new THREE.Object3D();
+    
+    addWalls(house, 0, 0, 0, size);
+    addRoof(house, 0, 0, 0, size);
+    addWindow(house, 0, 0, 0, size);
 
     house.position.set(x, y, z);
     scene.add(house);
@@ -337,7 +471,7 @@ function animate() {
     // }
     
     // rotate house
-    house.rotation.y += 0.025;
+    house.rotation.y += 0.01;
 
     render();
 
