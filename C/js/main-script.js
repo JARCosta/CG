@@ -16,6 +16,12 @@ var house, ovni, subreiro;
 
 var local_lights = [], olofote_light , direcional_light;
 
+var size = 6;
+var terrainSize = 1000; // Adjust the size of the terrain
+var terrainHeight = -size*4; // Adjust the height of the terrain
+var terrainResolution = 100; // Adjust the resolution of the terrain
+
+
 
 
 /////////////////////
@@ -48,13 +54,14 @@ function createScene() {
     axisHelper.visible = true;
     scene.add(axisHelper);
   
-    var size = 10;
     createHouse(0,              -size * 3, 0, size);
     createOVNI(0,                size * 10, 0, 10);
     createSubreiro(size * 6,    -size * 3, 0, size);
     createSubreiro(-size * 6,   -size * 3, 0, size);
-    createSubreiro(0,           -size * 3, size * 6, size);
-    createSubreiro(0,           -size * 3, -size * 6, size);
+    // createSubreiro(0,           -size * 3, size * 6, size);
+    // createSubreiro(0,           -size * 3, -size * 6, size);
+    createMoon(size * 20,               size * 20, -size * 20, size);
+    createTerrain();
   }
   
 
@@ -83,7 +90,7 @@ function createCamera() {
     cameras.push(temp);
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(150, 0, 0);
+    temp.position.set(0, 0, 150);
     temp.lookAt(scene.position);
     cameras.push(temp);
 
@@ -275,8 +282,9 @@ function addWalls(obj, x, y, z, size) {
     geometry = new THREE.BufferGeometry();
     geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
     geometry.setIndex( indices );
+    geometry.computeVertexNormals();
     
-    var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, roughness : 0.8, wireframe: wireframe_bool });
     
     mesh = new THREE.Mesh(geometry, material);
 
@@ -316,8 +324,9 @@ function addRoof(obj, x, y, z, size) {
     geometry = new THREE.BufferGeometry();
     geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices2, 3 ) );
     geometry.setIndex( indices2 );
+    geometry.computeVertexNormals();
 
-    var material = new THREE.MeshBasicMaterial({ color: 0x662222, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0x662222, wireframe: wireframe_bool });
     mesh = new THREE.Mesh(geometry, material);
 
     mesh.position.set(x, y, z);
@@ -367,8 +376,10 @@ function addWindow( obj, x, y, z, size ) {
     geometry = new THREE.BufferGeometry();
     geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices3, 3 ) );
     geometry.setIndex( indices3 );
+    geometry.computeVertexNormals();
 
-    var material = new THREE.MeshBasicMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xffffff, roughness : 0.8, wireframe: wireframe_bool });
+
     mesh = new THREE.Mesh(geometry, material);
     
     mesh.position.set(x, y, z);
@@ -400,33 +411,46 @@ function createOVNI(x, y, z, size) {
 
     var temp;
     
-    material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
     
-    temp = createBall(ovni, material, 0, 0, 0, size*10, 32, 32);
+    temp = createBall(ovni, material, 0, 0, 0, size*10);
     temp.scale.set(1, 0.375, 1);
 
-    material = new THREE.MeshBasicMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
+    material = new THREE.MeshPhongMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
     createBall(ovni, material, 0, size*1.25, 0, size*5, 32, 32);
 
-    material = new THREE.MeshBasicMaterial({ color: 0xdddd00, wireframe: wireframe_bool });
+    material = new THREE.MeshPhongMaterial({ color: 0xdddd88, wireframe: wireframe_bool });
     
     for(var i = 0; i < 7; i++) {
         var parent = new THREE.Object3D();
-        createBall(parent, material, 0, -size*1.25, size*3, size, 32, 32);
+        temp = createBall(parent, material, 0, -size*1.5, size*3, size, 32, 32);
+
+        var light = new THREE.PointLight(0xdddd88);
+        light.distance = 75;
+        light.intensity = 1;
+        light.rotation.set(0, 0, 0);
+        temp.add(light);
+
         parent.position.set(0, 0, 0);
-        // scene.add(parent);
         parent.rotation.y = i * 2 * Math.PI/7;
+
         ovni.add(parent);
         local_lights.push(parent);
     }
 
     olofote_light = createCilinder(ovni, material, 0, -size*3.25, 0, size*3, size, 0);
-    // enlighten object
-    olofote_light.add(new THREE.PointLight(0xdd0000, 1, 100, 2));
-
-    for (var i = 0; i < local_lights.length; i++) {
-        local_lights[i].add(new THREE.PointLight(0xdddd00, 1, 100, 2));
-    }
+    
+    var light = new THREE.SpotLight(0xaaaaaa);
+    light.distance = 0;
+    light.angle = Math.PI/16;
+    light.penumbra = 0.25;
+    
+    var target = new THREE.Object3D();
+    target.position.set(0, -size*3, 0);
+    olofote_light.add(target);
+    light.target = target;
+    
+    olofote_light.add(light);
 
     ovni.position.set(x, y, z);
     scene.add(ovni);
@@ -438,7 +462,7 @@ function createSubreiro(x, y, z, size) {
     subreiro = new THREE.Object3D();
 
     // geometry = new THREE.CylinderGeometry(size, size, size*2, 32);
-    material = new THREE.MeshBasicMaterial({ color: 0x8b4513, wireframe: wireframe_bool });
+    material = new THREE.MeshPhongMaterial({ color: 0x8b4513, wireframe: wireframe_bool });
     // mesh = new THREE.Mesh(geometry, material);
 
     // mesh.position.set(x, y, z);
@@ -449,7 +473,7 @@ function createSubreiro(x, y, z, size) {
     createCilinder(subreiro, material, -size*0.5, size*1.5, 0, size*0.75, size*3, Math.PI/16 + Math.PI/8);
     
     var temp;
-    material = new THREE.MeshBasicMaterial({ color: 0x004400, wireframe: wireframe_bool });
+    material = new THREE.MeshPhongMaterial({ color: 0x004400, wireframe: wireframe_bool });
     temp = createBall(subreiro, material, size*1.75, size*3, 0, size*2.5);
     temp.scale.set(1, 0.5, 1);
     temp = createBall(subreiro, material, -size*1.75, size*3, 0, size*2.5);
@@ -461,6 +485,49 @@ function createSubreiro(x, y, z, size) {
     scene.add(subreiro);
 }
 
+function createMoon(x, y, z, size) {
+    'use strict';
+
+    var moon = new THREE.Object3D();
+
+    material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    material = new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe_bool });
+    
+    var temp = createBall(moon, material, 0, 0, 0, size*10, 32, 32);
+
+    var dir_light = new THREE.DirectionalLight(0xffffff);
+    dir_light.intensity = 0.15;
+    dir_light.position.set(0, 0, 0);
+    
+    temp.add(dir_light);
+
+
+    moon.position.set(x, y, z);
+    scene.add(moon);
+}
+
+function createTerrain() {
+    var geometry = new THREE.PlaneGeometry(terrainSize, terrainSize, terrainResolution, terrainResolution);
+    var material = new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    var terrain = new THREE.Mesh(geometry, material);
+
+    terrain.position.y = terrainHeight;
+    terrain.rotation.x = -Math.PI / 2; // Rotate the terrain to be horizontal
+
+    // Modify the vertices to make the terrain irregular
+    // for (var i = 0; i <= terrainResolution; i++) {
+    //     for (var j = 0; j <= terrainResolution; j++) {
+    //         var vertex = geometry.vertices[i * (terrainResolution + 1) + j];
+    //         var randomHeight = Math.random() * maxHeight; // Adjust this value to control the irregularity
+    //         vertex.z += randomHeight;
+    //     }
+    // }
+
+    // geometry.computeFaceNormals();
+    // geometry.computeVertexNormals();
+
+    scene.add(terrain);
+}
 
 //////////////////////
 /* CHECK COLLISIONS */
@@ -546,7 +613,7 @@ function animate() {
     // }
     
     // rotate house
-    scene.rotation.y += 0.01;
+    // scene.rotation.y += 0.01;
 
     render();
 
@@ -593,7 +660,28 @@ function onKeyDown(e) {
     case 52: //4
         camera = cameras[3];
         break;
+    // arrow
+    case 37: //left
+        ovni.position.x -= 10;
+        break;
+    case 38: //up
+        ovni.position.z -= 10;
+        break;
+    case 39: //right
+        ovni.position.x += 10;
+        break;
+    case 40: //down
+        ovni.position.z += 10;
+        break;
 
+    case 76: //L
+    case 108: //l
+        ovni.position.y -= 10;
+        break;
+    case 80: //P
+    case 112: //p
+        ovni.position.y += 10;
+        break;
     }
 }
 
