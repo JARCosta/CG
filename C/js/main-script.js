@@ -75,7 +75,7 @@ function createCamera() {
     var temp;
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(0, 150, 0);
+    temp.position.set(0, 200, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
     
@@ -85,15 +85,14 @@ function createCamera() {
     cameras.push(temp);
 
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(150, 150, 150);
+    temp.position.set(0, 0, 150);
     temp.lookAt(scene.position);
     cameras.push(temp);
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(0, 0, 150);
+    temp.position.set(150, 150, 150);
     temp.lookAt(scene.position);
     cameras.push(temp);
-
 
     camera = temp;
 }
@@ -284,7 +283,7 @@ function addWalls(obj, x, y, z, size) {
     geometry.setIndex( indices );
     geometry.computeVertexNormals();
     
-    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, roughness : 0.8, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xffffff, roughness : 0.8, wireframe: wireframe_bool });
     
     mesh = new THREE.Mesh(geometry, material);
 
@@ -378,7 +377,7 @@ function addWindow( obj, x, y, z, size ) {
     geometry.setIndex( indices3 );
     geometry.computeVertexNormals();
 
-    var material = new THREE.MeshPhongMaterial({ color: 0xffffff, roughness : 0.8, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaff, roughness : 0.8, wireframe: wireframe_bool });
 
     mesh = new THREE.Mesh(geometry, material);
     
@@ -441,6 +440,7 @@ function createOVNI(x, y, z, size) {
     olofote_light = createCilinder(ovni, material, 0, -size*3.25, 0, size*3, size, 0);
     
     var light = new THREE.SpotLight(0xaaaaaa);
+    light.intensity = 1;
     light.distance = 0;
     light.angle = Math.PI/16;
     light.penumbra = 0.25;
@@ -462,27 +462,36 @@ function createSubreiro(x, y, z, size) {
     subreiro = new THREE.Object3D();
 
     // geometry = new THREE.CylinderGeometry(size, size, size*2, 32);
-    material = new THREE.MeshPhongMaterial({ color: 0x8b4513, wireframe: wireframe_bool });
+    material = new THREE.MeshPhongMaterial({ color: 0xa26a42, wireframe: wireframe_bool });
+
+
     // mesh = new THREE.Mesh(geometry, material);
 
     // mesh.position.set(x, y, z);
     // subreiro.add(mesh);
     // objects.push(mesh);
-    createCilinder(subreiro, material, 0, 0, 0, size*1, size*5, Math.PI/16);
-    createCilinder(subreiro, material, size*0.5, size*1.5, 0, size*0.75, size*3, Math.PI/16 - Math.PI/4);
-    createCilinder(subreiro, material, -size*0.5, size*1.5, 0, size*0.75, size*3, Math.PI/16 + Math.PI/8);
-    
+    createCilinder(subreiro, material, 0, 0, 0, size*0.8, size*9, Math.PI/16); //base
+    createCilinder(subreiro, material, size*0.9, size*0.9, 0, size*0.5, size*5, Math.PI/16 - Math.PI/3); //ram0
+
+    material = new THREE.MeshPhongMaterial({ color: 0x47230a, wireframe: wireframe_bool });
+
+
+    createCilinder(subreiro, material, size*1.4, size*1.3, 0, size*0.75, size * 2.3, Math.PI/16 - Math.PI/3); //cortiça ramo
+    createCilinder(subreiro, material, -size*0.45, size*2, 0, size*1.25, size * 5.2, Math.PI/16); //cortiça base
+
     var temp;
     material = new THREE.MeshPhongMaterial({ color: 0x004400, wireframe: wireframe_bool });
-    temp = createBall(subreiro, material, size*1.75, size*3, 0, size*2.5);
+    temp = createBall(subreiro, material, size*1.8, size*2.2, 2, size*2.4);
     temp.scale.set(1, 0.5, 1);
-    temp = createBall(subreiro, material, -size*1.75, size*3, 0, size*2.5);
+    temp = createBall(subreiro, material, -size*0.6, size*3.4, 2, size*3.5);
     temp.scale.set(1, 0.5, 1);
     
     // var material = new THREE.MeshBasicMaterial({ color: 0x006400, wireframe: wireframe_bool });
 
     subreiro.position.set(x, y, z);
     scene.add(subreiro);
+
+    return subreiro;
 }
 
 function createMoon(x, y, z, size) {
