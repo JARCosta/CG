@@ -14,6 +14,7 @@ var clock = new THREE.Clock(), delta;
 
 var house, ovni, subreiro;
 
+var local_lights = [], olofote_light , direcional_light;
 
 
 
@@ -48,12 +49,12 @@ function createScene() {
     scene.add(axisHelper);
   
     var size = 10;
-    createHouse(0, 0, 0, size);
-    createOVNI(0, size * 6, 0, 10);
-    createSubreiro(size * 6, 0, 0, size);
-    createSubreiro(-size * 6, 0, 0, size);
-    createSubreiro(0, 0, size * 6, size);
-    createSubreiro(0, 0, -size * 6, size);
+    createHouse(0,              -size * 3, 0, size);
+    createOVNI(0,                size * 10, 0, 10);
+    createSubreiro(size * 6,    -size * 3, 0, size);
+    createSubreiro(-size * 6,   -size * 3, 0, size);
+    createSubreiro(0,           -size * 3, size * 6, size);
+    createSubreiro(0,           -size * 3, -size * 6, size);
   }
   
 
@@ -80,6 +81,12 @@ function createCamera() {
     temp.position.set(150, 150, 150);
     temp.lookAt(scene.position);
     cameras.push(temp);
+    
+    temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    temp.position.set(150, 0, 0);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+
 
     camera = temp;
 }
@@ -101,6 +108,8 @@ function createBall(obj, material, x, y, z, size) {
     mesh.position.set(x, y, z);
     obj.add(mesh);
     objects.push(mesh);
+    
+    return mesh;
 }
 
 function createCube(obj, material, x, y, z, sizeX, sizeY, sizeZ) {
@@ -211,16 +220,20 @@ function addWalls(obj, x, y, z, size) {
         -1.5*size+size*0.35       , size*1   , size,                    // up right            31
 
     ]);
-
+    
     const indices = [
         // left wall
         0, 1, 4,
         4, 1, 5,
-
+        // left roof
+        4, 5, 9,
+        
         // right wall
         6, 3, 2,
         7, 3, 6,
-
+        // right roof
+        6, 8, 7,
+        
         // back wall
         6, 2, 0,
         4, 6, 0,
@@ -228,8 +241,6 @@ function addWalls(obj, x, y, z, size) {
         // front wall
             // door left
                 // window right
-                    // 1, 10, 11,
-                    // 5, 1, 11,
                     10, 31, 29,
                     11, 31, 10,
                 // window left
@@ -255,21 +266,9 @@ function addWalls(obj, x, y, z, size) {
                 // window bottom
                     23, 22, 18,
                     23, 18, 19,
-
-        // left roof
-        4, 5, 9,
-
-        // right roof
-        6, 8, 7,
-
-        // wall over the door
-        15, 14, 13,
-        15, 13, 11,
-
-        // window
-        // 16, 17, 19,
-        // 16, 19, 18,
-
+            // door up
+            15, 14, 13,
+            15, 13, 11,
 
     ];
 
@@ -277,7 +276,7 @@ function addWalls(obj, x, y, z, size) {
     geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
     geometry.setIndex( indices );
     
-    var material = new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe_bool });
+    var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
     
     mesh = new THREE.Mesh(geometry, material);
 
@@ -399,22 +398,39 @@ function createOVNI(x, y, z, size) {
 
     geometry = new THREE.SphereGeometry(size, 32, 32);
 
-
-
-    var material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
-    mesh = new THREE.Mesh(geometry, material);
+    var temp;
     
-    mesh.scale.set(1, 0.5, 1);
+    material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    
+    temp = createBall(ovni, material, 0, 0, 0, size*10, 32, 32);
+    temp.scale.set(1, 0.375, 1);
 
-    mesh.position.set(x, y, z);
-    ovni.add(mesh);
-    objects.push(mesh);
+    material = new THREE.MeshBasicMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
+    createBall(ovni, material, 0, size*1.25, 0, size*5, 32, 32);
 
+    material = new THREE.MeshBasicMaterial({ color: 0xdddd00, wireframe: wireframe_bool });
+    
+    for(var i = 0; i < 7; i++) {
+        var parent = new THREE.Object3D();
+        createBall(parent, material, 0, -size*1.25, size*3, size, 32, 32);
+        parent.position.set(0, 0, 0);
+        // scene.add(parent);
+        parent.rotation.y = i * 2 * Math.PI/7;
+        ovni.add(parent);
+        local_lights.push(parent);
+    }
 
-    // ovni.position.set(x, y, z);
+    olofote_light = createCilinder(ovni, material, 0, -size*3.25, 0, size*3, size, 0);
+    // enlighten object
+    olofote_light.add(new THREE.PointLight(0xdd0000, 1, 100, 2));
+
+    for (var i = 0; i < local_lights.length; i++) {
+        local_lights[i].add(new THREE.PointLight(0xdddd00, 1, 100, 2));
+    }
+
+    ovni.position.set(x, y, z);
     scene.add(ovni);
 }
-
 
 function createSubreiro(x, y, z, size) {
     'use strict';
@@ -428,15 +444,17 @@ function createSubreiro(x, y, z, size) {
     // mesh.position.set(x, y, z);
     // subreiro.add(mesh);
     // objects.push(mesh);
-
     createCilinder(subreiro, material, 0, 0, 0, size*1, size*5, Math.PI/16);
     createCilinder(subreiro, material, size*0.5, size*1.5, 0, size*0.75, size*3, Math.PI/16 - Math.PI/4);
     createCilinder(subreiro, material, -size*0.5, size*1.5, 0, size*0.75, size*3, Math.PI/16 + Math.PI/8);
-
+    
+    var temp;
     material = new THREE.MeshBasicMaterial({ color: 0x004400, wireframe: wireframe_bool });
-    createBall(subreiro, material, size*1.75, size*3, 0, size*2.5);
-    createBall(subreiro, material, -size*1.75, size*3, 0, size*2.5);
-
+    temp = createBall(subreiro, material, size*1.75, size*3, 0, size*2.5);
+    temp.scale.set(1, 0.5, 1);
+    temp = createBall(subreiro, material, -size*1.75, size*3, 0, size*2.5);
+    temp.scale.set(1, 0.5, 1);
+    
     // var material = new THREE.MeshBasicMaterial({ color: 0x006400, wireframe: wireframe_bool });
 
     subreiro.position.set(x, y, z);
