@@ -21,7 +21,9 @@ var terrainSize = 1000; // Adjust the size of the terrain
 var terrainHeight = -size*4; // Adjust the height of the terrain
 var terrainResolution = 100; // Adjust the resolution of the terrain
 
+var count = 0;
 
+var trees = [];
 
 
 /////////////////////
@@ -465,6 +467,7 @@ function createOVNI(x, y, z, size) {
     olofote_light.add(light);
 
     ovni.position.set(x, y, z);
+    ovni.rotation.x = Math.PI/128;
     scene.add(ovni);
 }
 
@@ -502,7 +505,7 @@ function createSubreiro(x, y, z, size) {
 
     subreiro.position.set(x, y, z);
     scene.add(subreiro);
-
+    trees.push(subreiro);
     return subreiro;
 }
 
@@ -617,6 +620,15 @@ function animate() {
 
     // rotate ovni
     ovni.rotation.y += 0.01;
+    count += 0.05;
+
+    ovni.position.x += Math.cos(count) * 0.25;
+    ovni.position.z += Math.sin(count) * 0.25;
+    ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
+
+    for(var i = 0; i < trees.length; i++){
+        trees[i].rotation.x += Math.cos(count)* 0.005;
+    }
 
     render();
 
@@ -677,30 +689,20 @@ function onKeyDown(e) {
         ovni.position.z += 10;
         break;
 
-    case 76: //L
-    case 108: //l
-        ovni.position.y -= 10;
-        break;
-    case 80: //P
-    case 112: //p
-        ovni.position.y += 10;
-        break;
 
     case 83: //S
     case 115: //s
-        console.log(ovni.children);
-        if (ovni.children[9].children[2].intensity != 0){
-            for(var i = 2; i < 9; i++){
-                ovni.children[i].children[0].children[0].intensity = 0;
-            }
-            ovni.children[9].children[2].intensity = 0;
+        for(var i = 2; i < 9; i++){
+            ovni.children[i].children[0].children[0].intensity = 0;
         }
-        else {
-            for(var i = 2; i < 9; i++){
-                ovni.children[i].children[0].children[0].intensity = 1;
-            }
-            ovni.children[9].children[2].intensity = 1;
+        ovni.children[9].children[2].intensity = 0;
+        break;
+    case 80: //P
+    case 112: //p
+        for(var i = 2; i < 9; i++){
+            ovni.children[i].children[0].children[0].intensity = 1;
         }
+        ovni.children[9].children[2].intensity = 1;
         break;
     }
     
