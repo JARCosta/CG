@@ -33,7 +33,7 @@ function createScene() {
     scene = new THREE.Scene();
   
     // Define the gradient colors
-    var color1 = new THREE.Color(0x000066); // Starting color
+    var color1 = new THREE.Color(0x000022); // Starting color
     var color2 = new THREE.Color(0x000000); // Ending color
   
     // Create a gradient texture
@@ -56,10 +56,17 @@ function createScene() {
   
     createHouse(0,              -size * 3, 0, size);
     createOVNI(0,                size * 10, 0, 10);
-    createSubreiro(size * 6,    -size * 3, 0, size);
-    createSubreiro(-size * 6,   -size * 3, 0, size);
-    // createSubreiro(0,           -size * 3, size * 6, size);
-    // createSubreiro(0,           -size * 3, -size * 6, size);
+
+    createSubreiro(size * 7 ,    -size * 3, size, size* 0.6);
+    createSubreiro(-size * 6,   -size * 3, -size * 3.2, size * 1.2);
+    createSubreiro(size ,           -size * 3, size * 6, size*0.6);
+    createSubreiro(-size * 2,           -size * 3, -size * 9, size);
+
+    createSubreiro(size * 14 ,    -size * 3, size * 15.9, size* 0.6);
+    createSubreiro(-size * 20,   -size * 3, -size * 12.4, size * 1.2);
+    createSubreiro(size * 12.3,           -size * 3, size * 13.7, size*0.6);
+    createSubreiro(size * 8.6,           -size * 3, -size * 18.3, size);
+
     createMoon(size * 20,               size * 20, -size * 20, size);
     createTerrain();
   }
@@ -398,6 +405,7 @@ function createHouse(x, y, z, size) {
     addWindow(house, 0, 0, 0, size);
 
     house.position.set(x, y, z);
+    house.rotation.y = Math.PI/2 + Math.PI/8;
     scene.add(house);
 }
 
@@ -428,6 +436,8 @@ function createOVNI(x, y, z, size) {
         light.distance = 75;
         light.intensity = 1;
         light.rotation.set(0, 0, 0);
+        parent.name = "local";
+        light.name = "light";
         temp.add(light);
 
         parent.position.set(0, 0, 0);
@@ -438,12 +448,14 @@ function createOVNI(x, y, z, size) {
     }
 
     olofote_light = createCilinder(ovni, material, 0, -size*3.25, 0, size*3, size, 0);
+    olofote_light.name = "olofote_light";
     
     var light = new THREE.SpotLight(0xaaaaaa);
     light.intensity = 1;
     light.distance = 0;
     light.angle = Math.PI/16;
     light.penumbra = 0.25;
+    light.name = "olofote";
     
     var target = new THREE.Object3D();
     target.position.set(0, -size*3, 0);
@@ -603,26 +615,8 @@ function init() {
 function animate() {
     'use strict';
 
-    // if (move) {
-    //     fast += 0.1416 * 0.5;
-    //     slow += 0.1416 * 0.05;
-    //     var cos = Math.cos(fast);
-    //     var sin = Math.sin(fast);
-    //     var pi = Math.PI;
-        
-    //     for (var i = 0; i < moving_obj.length; i++) {
-    //         // moving_obj[i].rotation.x = sin / pi;
-    //         // moving_obj[i].rotation.z = cos / pi;
-
-    //         moving_obj[i].rotation.y = -slow;
-
-    //         // moving_obj[i].position.x = 50 * (Math.sin(slow + i * 2 * pi / moving_obj.length) );
-    //         // moving_obj[i].position.z = 50 * (Math.cos(slow + i * 2 * pi / moving_obj.length));
-    //     }
-    // }
-    
-    // rotate house
-    // scene.rotation.y += 0.01;
+    // rotate ovni
+    ovni.rotation.y += 0.01;
 
     render();
 
@@ -691,7 +685,25 @@ function onKeyDown(e) {
     case 112: //p
         ovni.position.y += 10;
         break;
+
+    case 83: //S
+    case 115: //s
+        console.log(ovni.children);
+        if (ovni.children[9].children[2].intensity != 0){
+            for(var i = 2; i < 9; i++){
+                ovni.children[i].children[0].children[0].intensity = 0;
+            }
+            ovni.children[9].children[2].intensity = 0;
+        }
+        else {
+            for(var i = 2; i < 9; i++){
+                ovni.children[i].children[0].children[0].intensity = 1;
+            }
+            ovni.children[9].children[2].intensity = 1;
+        }
+        break;
     }
+    
 }
 
 ///////////////////////
