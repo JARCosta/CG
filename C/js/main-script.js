@@ -10,7 +10,7 @@ var wireframe_bool = false;
 
 var slow = 0,  fast = 0;
 
-var clock = new THREE.Clock(), delta;
+var clock = new THREE.Clock(), delta = 1;
 
 var house, ovni, subreiro;
 
@@ -24,6 +24,8 @@ var terrainResolution = 100; // Adjust the resolution of the terrain
 var count = 0;
 
 var trees = [];
+
+var basic_phong_bool = false;
 
 
 /////////////////////
@@ -52,11 +54,13 @@ function createScene() {
   
     scene.background = texture;
   
-    var axisHelper = new THREE.AxisHelper(10);
-    axisHelper.visible = true;
-    scene.add(axisHelper);
+    var axesHelper = new THREE.AxesHelper(10);
+    axesHelper.visible = true;
+    scene.add(axesHelper);
   
     createHouse(0,              -size * 3, 0, size);
+    house.rotation.y = Math.PI/2 +  Math.random() * Math.PI/6;
+
     createOVNI(0,                size * 10, 0, 10);
 
     createSubreiro(size * 7 ,    -size * 3, size, size* 0.6);
@@ -68,6 +72,10 @@ function createScene() {
     createSubreiro(-size * 20,   -size * 3, -size * 12.4, size * 1.2);
     createSubreiro(size * 12.3,           -size * 3, size * 13.7, size*0.6);
     createSubreiro(size * 8.6,           -size * 3, -size * 18.3, size);
+
+    for (var i = 0; i < trees.length; i++) {
+        trees[i].rotation.y = Math.random() * 2 * Math.PI;
+    }
 
     createMoon(size * 20,               size * 20, -size * 20, size);
     createTerrain();
@@ -83,16 +91,12 @@ function createCamera() {
     
     var temp;
     
-    temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    temp = new THREE.PerspectiveCamera(88, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(0, 200, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
     
-    temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
-    temp.position.set(150, 150, 150);
-    temp.lookAt(scene.position);
-    cameras.push(temp);
-
+    
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(0, 0, 150);
     temp.lookAt(scene.position);
@@ -100,6 +104,13 @@ function createCamera() {
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(150, 150, 150);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+    
+    temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
+    temp.position.set(150, 150, 150);
+    temp.zoom = 0.5;
+    temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
 
@@ -407,7 +418,6 @@ function createHouse(x, y, z, size) {
     addWindow(house, 0, 0, 0, size);
 
     house.position.set(x, y, z);
-    house.rotation.y = Math.PI/2 + Math.PI/8;
     scene.add(house);
 }
 
@@ -420,15 +430,15 @@ function createOVNI(x, y, z, size) {
 
     var temp;
     
-    material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
     
     temp = createBall(ovni, material, 0, 0, 0, size*10);
     temp.scale.set(1, 0.375, 1);
 
-    material = new THREE.MeshPhongMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
     createBall(ovni, material, 0, size*1.25, 0, size*5, 32, 32);
 
-    material = new THREE.MeshPhongMaterial({ color: 0xdddd88, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xdddd88, wireframe: wireframe_bool });
     
     for(var i = 0; i < 7; i++) {
         var parent = new THREE.Object3D();
@@ -477,7 +487,7 @@ function createSubreiro(x, y, z, size) {
     subreiro = new THREE.Object3D();
 
     // geometry = new THREE.CylinderGeometry(size, size, size*2, 32);
-    material = new THREE.MeshPhongMaterial({ color: 0xa26a42, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xa26a42, wireframe: wireframe_bool });
 
 
     // mesh = new THREE.Mesh(geometry, material);
@@ -488,14 +498,14 @@ function createSubreiro(x, y, z, size) {
     createCilinder(subreiro, material, 0, 0, 0, size*0.8, size*9, Math.PI/16); //base
     createCilinder(subreiro, material, size*0.9, size*0.9, 0, size*0.5, size*5, Math.PI/16 - Math.PI/3); //ram0
 
-    material = new THREE.MeshPhongMaterial({ color: 0x47230a, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0x47230a, wireframe: wireframe_bool });
 
 
     createCilinder(subreiro, material, size*1.4, size*1.3, 0, size*0.75, size * 2.3, Math.PI/16 - Math.PI/3); //cortiça ramo
     createCilinder(subreiro, material, -size*0.45, size*2, 0, size*1.25, size * 5.2, Math.PI/16); //cortiça base
 
     var temp;
-    material = new THREE.MeshPhongMaterial({ color: 0x004400, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0x004400, wireframe: wireframe_bool });
     temp = createBall(subreiro, material, size*1.8, size*2.2, 2, size*2.4);
     temp.scale.set(1, 0.5, 1);
     temp = createBall(subreiro, material, -size*0.6, size*3.4, 2, size*3.5);
@@ -514,8 +524,8 @@ function createMoon(x, y, z, size) {
 
     var moon = new THREE.Object3D();
 
-    material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
-    material = new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+    var material = new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe_bool });
     
     var temp = createBall(moon, material, 0, 0, 0, size*10, 32, 32);
 
@@ -537,6 +547,7 @@ function createTerrain() {
 
     terrain.position.y = terrainHeight;
     terrain.rotation.x = -Math.PI / 2; // Rotate the terrain to be horizontal
+    objects.push(terrain);
 
     // Modify the vertices to make the terrain irregular
     // for (var i = 0; i <= terrainResolution; i++) {
@@ -600,7 +611,7 @@ function init() {
     createCamera();
     
     scene.traverse(function (node) {
-        if (node instanceof THREE.AxisHelper) {
+        if (node instanceof THREE.AxesHelper) {
             node.visible = false;
         }
     });
@@ -619,15 +630,15 @@ function animate() {
     'use strict';
 
     // rotate ovni
-    ovni.rotation.y += 0.01;
-    count += 0.05;
+    ovni.rotation.y += 0.01 * delta;
+    count += 0.01 * delta;
 
-    ovni.position.x += Math.cos(count) * 0.25;
-    ovni.position.z += Math.sin(count) * 0.25;
+    ovni.position.x += Math.cos(count * 10) * 0.1;
+    ovni.position.z += Math.sin(count * 10) * 0.1;
     ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
 
     for(var i = 0; i < trees.length; i++){
-        trees[i].rotation.x += Math.cos(count)* 0.005;
+        trees[i].rotation.x += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
     }
 
     render();
@@ -704,8 +715,43 @@ function onKeyDown(e) {
         }
         ovni.children[9].children[2].intensity = 1;
         break;
-    }
     
+    case 81: //Q
+    case 113: //q
+    for(var i = 0; i < objects.length; i++){
+        var color = objects[i].material.color;
+        var phong = new THREE.MeshLambertMaterial({color: color, wireframe: wireframe_bool});
+        objects[i].material = phong;
+    }
+    break;
+    case 87: //W
+    case 119: //w
+        for(var i = 0; i < objects.length; i++){
+            var color = objects[i].material.color;
+            var phong = new THREE.MeshPhongMaterial({color: color, wireframe: wireframe_bool});
+            objects[i].material = phong;
+        }
+        break;
+
+    case 69: //E
+    case 101: //e
+        for(var i = 0; i < objects.length; i++){
+            var color = objects[i].material.color;
+            var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool});
+            objects[i].material = basic;
+        }
+        break;
+
+    case 82: //R
+    case 114: //r
+        ovni.children[0].children[0].children[0].intensity = 0;
+        break;
+
+
+    case 76: //L
+    case 108: //l
+        break;
+    }
 }
 
 ///////////////////////
