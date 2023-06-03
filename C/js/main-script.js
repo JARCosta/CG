@@ -650,6 +650,7 @@ function createSkyDome() {
     scene.add(skydome);
 
 }
+
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
@@ -790,17 +791,21 @@ function onKeyDown(e) {
 
     case 83: //S
     case 115: //s
-        for(var i = 2; i < 9; i++){
-            ovni.children[i].children[0].children[0].intensity = 0;
-        }
-        ovni.children[9].children[2].intensity = 0;
+        if (ovni.children[9].children[2].intensity == 0)
+            ovni.children[9].children[2].intensity = 1;
+        else
+            ovni.children[9].children[2].intensity = 0;
         break;
     case 80: //P
     case 112: //p
-        for(var i = 2; i < 9; i++){
-            ovni.children[i].children[0].children[0].intensity = 1;
-        }
-        ovni.children[9].children[2].intensity = 1;
+        if (ovni.children[3].children[0].children[0].intensity == 0)
+            for(var i = 2; i < 9; i++){
+                ovni.children[i].children[0].children[0].intensity = 1;
+            }
+        else
+            for(var i = 2; i < 9; i++){
+                ovni.children[i].children[0].children[0].intensity = 0;
+            }
         break;
     
     case 81: //Q
