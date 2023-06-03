@@ -59,20 +59,20 @@ function createScene() {
     axesHelper.visible = true;
     scene.add(axesHelper);
   
-    createHouse(0,              -size * 3, 0, size);
+    createHouse(0,              -size * 4, 0, size);
     house.rotation.y = Math.PI/2 +  Math.random() * Math.PI/6;
 
     createOVNI(0,                size * 10, 0, 10);
 
-    createSubreiro(size * 7 ,    -size * 3, size, size* 0.6);
-    createSubreiro(-size * 6,   -size * 3, -size * 3.2, size * 1.2);
-    createSubreiro(size ,           -size * 3, size * 6, size*0.6);
-    createSubreiro(-size * 2,           -size * 3, -size * 9, size);
+    createSubreiro(size * 7 ,       -size * 3.5, size, size* 0.6); // front of house
+    createSubreiro(-size * 6,       -size * 6, -size * 3.2, size * 1.2); // left back
+    createSubreiro(size ,           -size * 5, size * 6, size*0.6); // right back
+    createSubreiro(-size * 2,       -size * 6, -size * 9, size); // left left
 
-    createSubreiro(size * 14 ,    -size * 3, size * 15.9, size* 0.6);
-    createSubreiro(-size * 20,   -size * 3, -size * 12.4, size * 1.2);
-    createSubreiro(size * 12.3,           -size * 3, size * 13.7, size*0.6);
-    createSubreiro(size * 8.6,           -size * 3, -size * 18.3, size);
+    createSubreiro(size * 14 ,      -size * 2, size * 15.9, size* 0.6); 
+    createSubreiro(-size * 20,      -size * 3, -size * 12.4, size * 1.2);
+    createSubreiro(size * -12.3,    -size * 3, size * 13.7, size*0.6);
+    createSubreiro(size * 8.6,      -size * 5, -size * 18.3, size);
 
     for (var i = 0; i < trees.length; i++) {
         trees[i].rotation.y = Math.random() * 2 * Math.PI;
@@ -120,15 +120,16 @@ function createCamera() {
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(150, 0, 0);
+    temp.zoom = 0.5;
+    temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
 
-    perspectiveCamera = temp;
-    perspectiveCamera.position.set(0, 200, 0);
+    // perspectiveCamera.position.set(0, 200, 0);
     
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
     temp.position.set(200, 200, 200);
-    temp.zoom = 0.35;
+    temp.zoom = 0.25;
     temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
@@ -144,6 +145,7 @@ function createCamera() {
     temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
+    perspectiveCamera = temp;
 
     camera = temp;
 }
@@ -603,7 +605,7 @@ function createTerrain() {
     loader.load('https://cdn.discordapp.com/attachments/640620441291063306/1114231069714174013/heightmap.png', textureLoadCallback);
     
     function textureLoadCallback(texture) {
-        var dims = 1000;
+        var dims = 1500;
         var geometry = new THREE.PlaneGeometry(dims, dims, 100, 100);
         var image = texture.image;
         
@@ -635,7 +637,7 @@ function createTerrain() {
                 material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
 
             var random = Math.random() - 0.5;
-            if (Math.abs(random) < 0.2)
+            if (Math.sqrt(Math.pow(u * dims - dims / 2, 2) + Math.pow(v * dims - dims / 2, 2)) < 650)
             createBall(scene, material, (u * dims - dims / 2) + random * 20, data[k] - 55,-( v * dims - dims / 2 ) + random * 20, 2.5);
             
             geometry.getAttribute('position').array[i * 3 + 2] = y;
@@ -664,7 +666,7 @@ function createSkyDome() {
     // Create a material using the sky texture
     var loader = new THREE.TextureLoader();
 
-    loader.load('https://media.discordapp.net/attachments/640620441291063306/1114628833820278944/Z8PxBfXg0AfMcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDYtMDNUMTg6NTY6MTMrMDA6MDDH94BOAAAAJXRF0AWHRkYXRlOm1vZGlmeQAyMDIzLTA2LTAzVDE4OjU2OjEzKzAwOjAwtqo48gAAAB50RVh0aWNjOmNv0AcHlyaWdodABHb29nbGUgSW5jLiAyMDE2rAszOAAAABR0RVh0aWNjOmRlc2NyaXB0aW9uAHNSR0K60AkHMHAAAAAElFTkSuQmCC.png?width=952&height=952', textureLoadCallback);
+    // loader.load('https://media.discordapp.net/attachments/640620441291063306/1114628833820278944/Z8PxBfXg0AfMcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDYtMDNUMTg6NTY6MTMrMDA6MDDH94BOAAAAJXRF0AWHRkYXRlOm1vZGlmeQAyMDIzLTA2LTAzVDE4OjU2OjEzKzAwOjAwtqo48gAAAB50RVh0aWNjOmNv0AcHlyaWdodABHb29nbGUgSW5jLiAyMDE2rAszOAAAABR0RVh0aWNjOmRlc2NyaXB0aW9uAHNSR0K60AkHMHAAAAAElFTkSuQmCC.png?width=952&height=952', textureLoadCallback);
     loader.load('https://cdn.discordapp.com/attachments/762368964289757194/1114630344147210250/angryimg_1.png', textureLoadCallback);
 
     function textureLoadCallback(texture) {
@@ -738,11 +740,7 @@ function init() {
     createScene();
     createCamera();
 
-    // console.log(perspectiveCamera.position);
-
-
-
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new THREE.OrbitControls(perspectiveCamera, renderer.domElement);
     controls.update();
     
     scene.traverse(function (node) {
@@ -897,24 +895,23 @@ function onKeyDown(e) {
             objects[i].material = basic;
         }
         break;
-
-    case 82: //R
-    case 114: //r
-        ovni.children[0].children[0].children[0].intensity = 0;
-        break;
+        
+        case 82: //R
+        case 114: //r
+            for(var i = 0; i < objects.length; i++){
+                var color = objects[i].material.color;
+                var texture = undefined;
+                if (objects[i].material.map != undefined){
+                    texture = objects[i].material.map;
+                }
+                var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture});
+                objects[i].material = basic;
+            }
+            break;
 
 
     case 76: //L
     case 108: //l
-        // for(var i = 0; i < objects.length; i++){
-        //     var color = objects[i].material.color;
-        //     var texture = undefined;
-        //     if (objects[i].material.map != undefined){
-        //         texture = objects[i].material.map;
-        //     }
-        //     var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture});
-        //     objects[i].material = basic;
-        // }
         camera = perspectiveCamera;
         break;
     }
