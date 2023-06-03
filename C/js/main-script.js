@@ -665,6 +665,7 @@ function createSkyDome() {
     var loader = new THREE.TextureLoader();
 
     loader.load('https://media.discordapp.net/attachments/640620441291063306/1114628833820278944/Z8PxBfXg0AfMcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDYtMDNUMTg6NTY6MTMrMDA6MDDH94BOAAAAJXRF0AWHRkYXRlOm1vZGlmeQAyMDIzLTA2LTAzVDE4OjU2OjEzKzAwOjAwtqo48gAAAB50RVh0aWNjOmNv0AcHlyaWdodABHb29nbGUgSW5jLiAyMDE2rAszOAAAABR0RVh0aWNjOmRlc2NyaXB0aW9uAHNSR0K60AkHMHAAAAAElFTkSuQmCC.png?width=952&height=952', textureLoadCallback);
+    loader.load('https://media.discordapp.net/attachments/640620441291063306/1114629470410768404/angryimg.png?width=375&height=375', textureLoadCallback);
 
     function textureLoadCallback(texture) {
         var material = new THREE.MeshBasicMaterial({color: 0x110033, map: texture, side: THREE.BackSide });
