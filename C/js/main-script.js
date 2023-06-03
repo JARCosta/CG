@@ -2,7 +2,7 @@
 /* GLOBAL VARIABLES */
 //////////////////////
 
-var camera, cameras = [], scene, renderer;
+var camera, cameras = [], scene, renderer, perspectiveCamera, controls;
 var objects = [];
 
 var geometry, mesh;
@@ -101,7 +101,7 @@ function createScene() {
         y = y * dist * sky_distance;
         z = z * dist * sky_distance;
 
-        console.log("Star", x, y, z);
+        // console.log("Star", x, y, z);
         createStar(x, y, z);
     }
   }
@@ -116,18 +116,15 @@ function createCamera() {
     
     var temp;
     
-    temp = new THREE.PerspectiveCamera(88, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(0, 200, 0);
-    temp.zoom = 0.5;
-    temp.updateProjectionMatrix();
-    temp.lookAt(scene.position);
-    cameras.push(temp);
     
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(150, 0, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
+
+    perspectiveCamera = temp;
+    perspectiveCamera.position.set(0, 200, 0);
     
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
     temp.position.set(200, 200, 200);
@@ -135,9 +132,16 @@ function createCamera() {
     temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
-
+    
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(150, 150, 150);
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+    
+    temp = new THREE.PerspectiveCamera(88, window.innerWidth / window.innerHeight, 1, 1000);
+    temp.position.set(0, 200, 0);
+    temp.zoom = 0.5;
+    temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
 
@@ -330,7 +334,7 @@ function addWalls(obj, x, y, z, size) {
     geometry.setIndex( indices );
     geometry.computeVertexNormals();
     
-    var material = new THREE.MeshPhongMaterial({ color: 0xffffff, roughness : 0.8, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xffffff, wireframe: wireframe_bool });
     
     mesh = new THREE.Mesh(geometry, material);
 
@@ -424,7 +428,7 @@ function addWindow( obj, x, y, z, size ) {
     geometry.setIndex( indices3 );
     geometry.computeVertexNormals();
 
-    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaff, roughness : 0.8, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
 
     mesh = new THREE.Mesh(geometry, material);
     
@@ -599,8 +603,8 @@ function createTerrain() {
     loader.load('https://cdn.discordapp.com/attachments/640620441291063306/1114231069714174013/heightmap.png', textureLoadCallback);
     
     function textureLoadCallback(texture) {
-        
-        var geometry = new THREE.PlaneGeometry(5000, 5000, 100, 100);
+        var dims = 1000;
+        var geometry = new THREE.PlaneGeometry(dims, dims, 100, 100);
         var image = texture.image;
         
         var canvas = Object.assign(document.createElement('canvas'), { height: 1081, width: 1081 });
@@ -617,12 +621,29 @@ function createTerrain() {
 
             var k = row * image.width + col + 1;
             
-            var z = data[k] / 255.0 * 255 - 55;
-            geometry.getAttribute('position').array[i * 3 + 2] = z;
+            var y = data[k] / 255.0 * 255 - 55;
+            var random = Math.random();
+
+            var material;
+            if (random < 0.25)
+                material = new THREE.MeshBasicMaterial({ color: 0xdddd00, wireframe: wireframe_bool });
+            else if (random < 0.5)
+                material = new THREE.MeshBasicMaterial({ color: 0xccaacc, wireframe: wireframe_bool });
+            else if (random < 0.75)
+                material = new THREE.MeshBasicMaterial({ color: 0xaaddff, wireframe: wireframe_bool });
+            else
+                material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
+
+            var random = Math.random() - 0.5;
+            if (Math.abs(random) < 0.2)
+            createBall(scene, material, (u * dims - dims / 2) + random * 20, data[k] - 55,-( v * dims - dims / 2 ) + random * 20, 2.5);
+            
+            geometry.getAttribute('position').array[i * 3 + 2] = y;
         }
     
         var material = new THREE.MeshPhongMaterial({ color: 0x00ff00, map: texture, wireframe: wireframe_bool });
         var terrain = new THREE.Mesh(geometry, material);
+        // console.log(terrain);
         terrain.rotation.x = Math.PI * 1.5;
     
         objects.push(terrain);
@@ -637,11 +658,11 @@ function createSkyDome() {
     var skyGeometry = new THREE.SphereGeometry(600, 32, 32);
 
     // Load a sky texture
-    var textureLoader = new THREE.TextureLoader();
-    var skyTexture = textureLoader.load('sky_texture.jpg');
+    // var textureLoader = new THREE.TextureLoader();
+    // var skyTexture = textureLoader.load('sky_texture.jpg');
 
     // Create a material using the sky texture
-    var skyMaterial = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide });
+    var skyMaterial = new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide });
 
     // Create the skydome mesh
     var skydome = new THREE.Mesh(skyGeometry, skyMaterial);
@@ -696,6 +717,13 @@ function init() {
 
     createScene();
     createCamera();
+
+    // console.log(perspectiveCamera.position);
+
+
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.update();
     
     scene.traverse(function (node) {
         if (node instanceof THREE.AxesHelper) {
@@ -720,14 +748,18 @@ function animate() {
     ovni.rotation.y += 0.01 * delta;
     count += 0.01 * delta;
 
-    ovni.position.x += Math.cos(count * 10) * 0.1;
-    ovni.position.z += Math.sin(count * 10) * 0.1;
-    ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
+    // ovni.position.x += Math.cos(count * 10) * 0.1;
+    // ovni.position.z += Math.sin(count * 10) * 0.1;
+    ovni.position.x += Math.cos(count * 10 ) * 0.1 + Math.random()-0.05 * 10;
+    ovni.position.z += Math.sin(count * 10 ) * 0.1 + Math.random()-0.05 * 10;
+    // ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
 
     for(var i = 0; i < trees.length; i++){
         trees[i].rotation.x += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
         trees[i].rotation.z += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
     }
+
+    // controls.update();
 
     render();
 
@@ -854,15 +886,16 @@ function onKeyDown(e) {
 
     case 76: //L
     case 108: //l
-        for(var i = 0; i < objects.length; i++){
-            var color = objects[i].material.color;
-            var texture = undefined;
-            if (objects[i].material.map != undefined){
-                texture = objects[i].material.map;
-            }
-            var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture});
-            objects[i].material = basic;
-        }
+        // for(var i = 0; i < objects.length; i++){
+        //     var color = objects[i].material.color;
+        //     var texture = undefined;
+        //     if (objects[i].material.map != undefined){
+        //         texture = objects[i].material.map;
+        //     }
+        //     var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture});
+        //     objects[i].material = basic;
+        // }
+        camera = perspectiveCamera;
         break;
     }
 }
