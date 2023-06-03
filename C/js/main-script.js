@@ -5,7 +5,7 @@
 var camera, cameras = [], scene, renderer;
 var objects = [];
 
-var geometry, material, mesh;
+var geometry, mesh;
 var wireframe_bool = false;
 
 var slow = 0,  fast = 0;
@@ -17,6 +17,7 @@ var house, ovni, subreiro;
 var local_lights = [], olofote_light , direcional_light;
 
 var size = 6;
+var terrain;
 var terrainSize = 1000; // Adjust the size of the terrain
 var terrainHeight = -size*4; // Adjust the height of the terrain
 var terrainResolution = 100; // Adjust the resolution of the terrain
@@ -77,8 +78,9 @@ function createScene() {
         trees[i].rotation.y = Math.random() * 2 * Math.PI;
     }
 
-    createMoon(size * 20,               size * 20, -size * 20, size);
+    createMoon(-size * 60,               size * 20, size * 10, size);
     createTerrain();
+    createSkyDome();
   }
   
 
@@ -92,25 +94,27 @@ function createCamera() {
     var temp;
     
     temp = new THREE.PerspectiveCamera(88, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(0, 200, 0);
+    temp.position.set(0, 300, 0);
+    temp.zoom = 0.75;
+    temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
     
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(0, 0, 150);
-    temp.lookAt(scene.position);
-    cameras.push(temp);
-    
-    temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(150, 150, 150);
+    temp.position.set(150, 0, 0);
     temp.lookAt(scene.position);
     cameras.push(temp);
     
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
     temp.position.set(150, 150, 150);
-    temp.zoom = 0.5;
+    temp.zoom = 0.3;
     temp.updateProjectionMatrix();
+    temp.lookAt(scene.position);
+    cameras.push(temp);
+
+    temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    temp.position.set(150, 150, 150);
     temp.lookAt(scene.position);
     cameras.push(temp);
 
@@ -438,13 +442,13 @@ function createOVNI(x, y, z, size) {
     var material = new THREE.MeshPhongMaterial({ color: 0xaaaaff, wireframe: wireframe_bool });
     createBall(ovni, material, 0, size*1.25, 0, size*5, 32, 32);
 
-    var material = new THREE.MeshPhongMaterial({ color: 0xdddd88, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xdddd00, wireframe: wireframe_bool });
     
     for(var i = 0; i < 7; i++) {
         var parent = new THREE.Object3D();
         temp = createBall(parent, material, 0, -size*1.5, size*3, size, 32, 32);
 
-        var light = new THREE.PointLight(0xdddd88);
+        var light = new THREE.PointLight(0xdddd800);
         light.distance = 75;
         light.intensity = 1;
         light.rotation.set(0, 0, 0);
@@ -530,8 +534,12 @@ function createMoon(x, y, z, size) {
     var temp = createBall(moon, material, 0, 0, 0, size*10, 32, 32);
 
     var dir_light = new THREE.DirectionalLight(0xffffff);
-    dir_light.intensity = 0.15;
+    dir_light.intensity = 1;
     dir_light.position.set(0, 0, 0);
+
+    var ambient_light = new THREE.AmbientLight(0x333333);
+    ambient_light.intensity = 1;
+    temp.add(ambient_light);
     
     temp.add(dir_light);
 
@@ -541,29 +549,62 @@ function createMoon(x, y, z, size) {
 }
 
 function createTerrain() {
-    var geometry = new THREE.PlaneGeometry(terrainSize, terrainSize, terrainResolution, terrainResolution);
-    var material = new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-    var terrain = new THREE.Mesh(geometry, material);
+    
+    var loader = new THREE.TextureLoader();
+    loader.load('https://cdn.discordapp.com/attachments/640620441291063306/1114231069714174013/heightmap.png', textureLoadCallback);
+    
+    function textureLoadCallback(texture) {
+        
+        var geometry = new THREE.PlaneGeometry(5000, 5000, 100, 100);
+        var image = texture.image;
+        
+        var canvas = Object.assign(document.createElement('canvas'), { height: 1081, width: 1081 });
+        var context = Object.assign(canvas.getContext('2d'), { width: image.width, height: image.height });
+        context.drawImage(image, 0, 0, image.width, image.height, 0, 0, context.width, context.height);
+        var data = context.getImageData(0, 0, image.width, image.height).data;
+        
+        for (var i = 0; i < geometry.getAttribute('position').count; i++) {
+            var u = geometry.getAttribute('uv').array[i * 2];
+            var v = geometry.getAttribute('uv').array[i * 2 + 1];
 
-    terrain.position.y = terrainHeight;
-    terrain.rotation.x = -Math.PI / 2; // Rotate the terrain to be horizontal
-    objects.push(terrain);
+            let col = Math.min(Math.floor(image.width * u), image.width - 1) * 4;
+            let row = Math.min(Math.floor(image.height * v), image.height - 1) * 4;
 
-    // Modify the vertices to make the terrain irregular
-    // for (var i = 0; i <= terrainResolution; i++) {
-    //     for (var j = 0; j <= terrainResolution; j++) {
-    //         var vertex = geometry.vertices[i * (terrainResolution + 1) + j];
-    //         var randomHeight = Math.random() * maxHeight; // Adjust this value to control the irregularity
-    //         vertex.z += randomHeight;
-    //     }
-    // }
+            var k = row * image.width + col + 1;
+            
+            var z = data[k] / 255.0 * 255 - 55;
+            geometry.getAttribute('position').array[i * 3 + 2] = z;
+        }
+    
+        var material = new THREE.MeshPhongMaterial({ color: 0x00ff00, map: texture, wireframe: wireframe_bool });
+        var terrain = new THREE.Mesh(geometry, material);
+        terrain.rotation.x = Math.PI * 1.5;
+    
+        objects.push(terrain);
+        scene.add(terrain);
+    }
 
-    // geometry.computeFaceNormals();
-    // geometry.computeVertexNormals();
 
-    scene.add(terrain);
 }
 
+function createSkyDome() {
+    // Create a sphere geometry for the skydome
+    var skyGeometry = new THREE.SphereGeometry(600, 32, 32);
+
+    // Load a sky texture
+    var textureLoader = new THREE.TextureLoader();
+    var skyTexture = textureLoader.load('sky_texture.jpg');
+
+    // Create a material using the sky texture
+    var skyMaterial = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide });
+
+    // Create the skydome mesh
+    var skydome = new THREE.Mesh(skyGeometry, skyMaterial);
+
+    // Add the skydome to the scene
+    scene.add(skydome);
+
+}
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
@@ -630,16 +671,17 @@ function animate() {
     'use strict';
 
     // rotate ovni
-    ovni.rotation.y += 0.01 * delta;
-    count += 0.01 * delta;
+    // ovni.rotation.y += 0.01 * delta;
+    // count += 0.01 * delta;
 
-    ovni.position.x += Math.cos(count * 10) * 0.1;
-    ovni.position.z += Math.sin(count * 10) * 0.1;
-    ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
+    // ovni.position.x += Math.cos(count * 10) * 0.1;
+    // ovni.position.z += Math.sin(count * 10) * 0.1;
+    // ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
 
-    for(var i = 0; i < trees.length; i++){
-        trees[i].rotation.x += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
-    }
+    // for(var i = 0; i < trees.length; i++){
+    //     trees[i].rotation.x += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
+    //     trees[i].rotation.z += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
+    // }
 
     render();
 
@@ -720,7 +762,11 @@ function onKeyDown(e) {
     case 113: //q
     for(var i = 0; i < objects.length; i++){
         var color = objects[i].material.color;
-        var phong = new THREE.MeshLambertMaterial({color: color, wireframe: wireframe_bool});
+        var texture = undefined;
+        if (objects[i].material.map != undefined){
+            texture = objects[i].material.map;
+        }
+        var phong = new THREE.MeshLambertMaterial({color: color, wireframe: wireframe_bool, map: texture});
         objects[i].material = phong;
     }
     break;
@@ -728,7 +774,11 @@ function onKeyDown(e) {
     case 119: //w
         for(var i = 0; i < objects.length; i++){
             var color = objects[i].material.color;
-            var phong = new THREE.MeshPhongMaterial({color: color, wireframe: wireframe_bool});
+            var texture = undefined;
+            if (objects[i].material.map != undefined){
+                texture = objects[i].material.map;
+            }
+            var phong = new THREE.MeshPhongMaterial({color: color, wireframe: wireframe_bool, map: texture});
             objects[i].material = phong;
         }
         break;
@@ -737,7 +787,11 @@ function onKeyDown(e) {
     case 101: //e
         for(var i = 0; i < objects.length; i++){
             var color = objects[i].material.color;
-            var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool});
+            var texture = undefined;
+            if (objects[i].material.map != undefined){
+                texture = objects[i].material.map;
+            }
+            var basic = new THREE.MeshToonMaterial({color: color, wireframe: wireframe_bool, map: texture});
             objects[i].material = basic;
         }
         break;
@@ -750,6 +804,15 @@ function onKeyDown(e) {
 
     case 76: //L
     case 108: //l
+        for(var i = 0; i < objects.length; i++){
+            var color = objects[i].material.color;
+            var texture = undefined;
+            if (objects[i].material.map != undefined){
+                texture = objects[i].material.map;
+            }
+            var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture});
+            objects[i].material = basic;
+        }
         break;
     }
 }
