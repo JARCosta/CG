@@ -78,9 +78,32 @@ function createScene() {
         trees[i].rotation.y = Math.random() * 2 * Math.PI;
     }
 
-    createMoon(-size * 60,               size * 20, size * 10, size);
+    var sky_distance = 599;
+
+    var x = -600;
+    var z = 100;
+    var y = 200;
+    var dist = 1 / Math.sqrt(x*x + y*y + z*z);
+    x = x * dist * sky_distance;
+    y = y * dist * sky_distance;
+    z = z * dist * sky_distance;
+
+    createMoon(x, y, z, size);
     createTerrain();
     createSkyDome();
+
+    for (var i = 0; i < 1000; i++) {
+        var x = Math.random() - 0.5;
+        var z = Math.random() - 0.5;
+        var y = Math.random();
+        var dist = 1 / Math.sqrt(x*x + y*y + z*z);
+        x = x * dist * sky_distance;
+        y = y * dist * sky_distance;
+        z = z * dist * sky_distance;
+
+        console.log("Star", x, y, z);
+        createStar(x, y, z);
+    }
   }
   
 
@@ -94,8 +117,8 @@ function createCamera() {
     var temp;
     
     temp = new THREE.PerspectiveCamera(88, window.innerWidth / window.innerHeight, 1, 1000);
-    temp.position.set(0, 300, 0);
-    temp.zoom = 0.75;
+    temp.position.set(0, 200, 0);
+    temp.zoom = 0.5;
     temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
@@ -107,8 +130,8 @@ function createCamera() {
     cameras.push(temp);
     
     temp = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, 1, 1000);
-    temp.position.set(150, 150, 150);
-    temp.zoom = 0.3;
+    temp.position.set(200, 200, 200);
+    temp.zoom = 0.35;
     temp.updateProjectionMatrix();
     temp.lookAt(scene.position);
     cameras.push(temp);
@@ -548,6 +571,28 @@ function createMoon(x, y, z, size) {
     scene.add(moon);
 }
 
+function createStar(x, y, z) {
+    'use strict';
+
+    var star = new THREE.Object3D();
+
+    var material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: wireframe_bool });
+
+    createBall(star, material, 0, 0, 0, size*0.5, 32, 32);
+
+    // var dir_light = new THREE.DirectionalLight(0xffffff);
+    // dir_light.intensity = 1;
+    // dir_light.position.set(0, 0, 0);
+    // temp.add(dir_light);
+
+    // var ambient_light = new THREE.AmbientLight(0x333333);
+    // ambient_light.intensity = 1;
+    // temp.add(ambient_light);
+
+    star.position.set(x, y, z);
+    scene.add(star);
+}
+
 function createTerrain() {
     
     var loader = new THREE.TextureLoader();
@@ -671,17 +716,17 @@ function animate() {
     'use strict';
 
     // rotate ovni
-    // ovni.rotation.y += 0.01 * delta;
-    // count += 0.01 * delta;
+    ovni.rotation.y += 0.01 * delta;
+    count += 0.01 * delta;
 
-    // ovni.position.x += Math.cos(count * 10) * 0.1;
-    // ovni.position.z += Math.sin(count * 10) * 0.1;
-    // ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
+    ovni.position.x += Math.cos(count * 10) * 0.1;
+    ovni.position.z += Math.sin(count * 10) * 0.1;
+    ovni.position.y += Math.sin(count/2 + Math.PI/9) * 0.1;
 
-    // for(var i = 0; i < trees.length; i++){
-    //     trees[i].rotation.x += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
-    //     trees[i].rotation.z += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
-    // }
+    for(var i = 0; i < trees.length; i++){
+        trees[i].rotation.x += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
+        trees[i].rotation.z += (Math.cos(count) + (Math.random() - 0.5) * 10 ) * 0.001;
+    }
 
     render();
 
