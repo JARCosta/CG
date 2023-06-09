@@ -89,8 +89,8 @@ function createScene() {
     z = z * dist * sky_distance;
 
     createMoon(x, y, z, size);
-    createTerrain();
-    createSkyDome();
+    // createTerrain();
+    // createSkyDome();
 
     for (var i = 0; i < 1000; i++) {
         var x = Math.random() - 0.5;
@@ -118,7 +118,7 @@ function createCamera() {
     
     temp = new THREE.StereoCamera();
     temp.aspect = window.innerWidth / window.innerHeight;
-    temp.eyeSep = 0.1;
+    // temp.eyeSep = 0.1;
     temp.cameraL.position.set(0, 200, 0);
     temp.cameraR.position.set(0, 200, 0);
     temp.cameraL.lookAt(scene.position);
@@ -794,7 +794,7 @@ function animate() {
     }
 
     // controls.update();
-
+    // render();
     renderer.setAnimationLoop(render);
 }
 ////////////////////////////
@@ -826,18 +826,29 @@ function onKeyDown(e) {
             objects[i].material.wireframe = wireframe_bool; 
         }
         break;
+    
     case 49: //1
-        camera = cameras[0];
+        createTerrain();
         break;
     case 50: //2
-        camera = cameras[1];
+        createSkyDome();
         break;
     case 51: //3
-        camera = cameras[2];
+        camera = cameras[4];
         break;
     case 52: //4
         camera = cameras[3];
         break;
+    case 53: //5
+        camera = cameras[2];
+        break;
+    case 54: //6
+        camera = cameras[1];
+        break;
+    case 55: //7
+        camera = cameras[0];
+        break;
+    
     // arrow
     case 37: //left
         ovni.position.x -= 10;
