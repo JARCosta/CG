@@ -736,6 +736,7 @@ function update(){
 /////////////
 function render() {
     'use strict';
+    animate();
     renderer.render(scene, camera);
 }
 
@@ -747,8 +748,10 @@ function init() {
     renderer = new THREE.WebGLRenderer({
         antialias: true
     });
+    renderer.xr.enabled = true;
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+    document.body.appendChild( VRButton.createButton( renderer ) );
 
     createScene();
     createCamera();
@@ -792,9 +795,7 @@ function animate() {
 
     // controls.update();
 
-    render();
-
-    requestAnimationFrame(animate);
+    renderer.setAnimationLoop(render);
 }
 ////////////////////////////
 /* RESIZE WINDOW CALLBACK */
