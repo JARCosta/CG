@@ -116,7 +116,15 @@ function createCamera() {
     
     var temp;
     
-    
+    temp = new THREE.StereoCamera();
+    temp.aspect = window.innerWidth / window.innerHeight;
+    temp.eyeSep = 0.1;
+    temp.cameraL.position.set(0, 200, 0);
+    temp.cameraR.position.set(0, 200, 0);
+    temp.cameraL.lookAt(scene.position);
+    temp.cameraR.lookAt(scene.position);
+    cameras.push(temp);
+
     
     temp = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     temp.position.set(150, 0, 0);
@@ -561,6 +569,7 @@ function createMoon(x, y, z, size) {
     var material = new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe_bool });
     
     var temp = createBall(moon, material, 0, 0, 0, size*10, 32, 32);
+    objects.pop();
 
     var dir_light = new THREE.DirectionalLight(0xffffff);
     dir_light.intensity = 1;
@@ -582,7 +591,7 @@ function createStar(x, y, z) {
 
     var star = new THREE.Object3D();
 
-    var material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: wireframe_bool });
+    var material = new THREE.MeshPhongMaterial({ color: 0xffffff, wireframe: wireframe_bool });
 
     createBall(star, material, 0, 0, 0, size*0.5, 32, 32);
 
@@ -627,15 +636,18 @@ function createTerrain() {
             var random = Math.random();
 
             var material;
+            var color;
             if (random < 0.25)
-                material = new THREE.MeshBasicMaterial({ color: 0xdddd00, wireframe: wireframe_bool });
+                color = 0xdddd00;
             else if (random < 0.5)
-                material = new THREE.MeshBasicMaterial({ color: 0xccaacc, wireframe: wireframe_bool });
+                color = 0xccaacc;
             else if (random < 0.75)
-                material = new THREE.MeshBasicMaterial({ color: 0xaaddff, wireframe: wireframe_bool });
+                color = 0xaaddff;
             else
-                material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: wireframe_bool });
-
+                color = 0xaaaaaa;
+            
+            material = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe_bool });
+            
             var random = Math.random() - 0.5;
             if (Math.sqrt(Math.pow(u * dims - dims / 2, 2) + Math.pow(v * dims - dims / 2, 2)) < 650)
             createBall(scene, material, (u * dims - dims / 2) + random * 20, data[k] - 55,-( v * dims - dims / 2 ) + random * 20, 2.5);
@@ -658,7 +670,7 @@ function createTerrain() {
 function createSkyDome() {
     // Create a sphere geometry for the skydome
     var skyGeometry = new THREE.SphereGeometry(600, 32, 32);
-
+    
     // Load a sky texture
     // var textureLoader = new THREE.TextureLoader();
     // var skyTexture = textureLoader.load('sky_texture.jpg');
@@ -670,18 +682,19 @@ function createSkyDome() {
     loader.load('https://cdn.discordapp.com/attachments/762368964289757194/1114630344147210250/angryimg_1.png', textureLoadCallback);
 
     function textureLoadCallback(texture) {
-        var material = new THREE.MeshBasicMaterial({color: 0x440044, map: texture, side: THREE.BackSide });
+        var material = new THREE.MeshPhongMaterial({color: 0x440044, map: texture, side: THREE.BackSide });
 
         // Create the skydome mesh
         var skydome = new THREE.Mesh(skyGeometry, material);
-
+        
         skydome.rotation.x = Math.PI * 0.5;
         skydome.rotation.z = Math.PI * 1;
+        objects.push(skydome);
 
         // Add the skydome to the scene
         scene.add(skydome);
-
-
+        
+        
     }
     
     // var skyMaterial = new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide });
@@ -862,11 +875,19 @@ function onKeyDown(e) {
     case 113: //q
     for(var i = 0; i < objects.length; i++){
         var color = objects[i].material.color;
-        var texture = undefined;
         if (objects[i].material.map != undefined){
-            texture = objects[i].material.map;
+            var texture = objects[i].material.map;
+            if(objects[i].material.side != undefined){
+                var side = objects[i].material.side;
+                var phong = new THREE.MeshLambertMaterial({color: color, wireframe: wireframe_bool, map: texture, side: side});
+            }
+            else {
+                var phong = new THREE.MeshLambertMaterial({color: color, wireframe: wireframe_bool, map: texture});
+            }
         }
-        var phong = new THREE.MeshLambertMaterial({color: color, wireframe: wireframe_bool, map: texture});
+        else {
+            var phong = new THREE.MeshLambertMaterial({color: color, wireframe: wireframe_bool});
+        }
         objects[i].material = phong;
     }
     break;
@@ -874,11 +895,20 @@ function onKeyDown(e) {
     case 119: //w
         for(var i = 0; i < objects.length; i++){
             var color = objects[i].material.color;
-            var texture = undefined;
             if (objects[i].material.map != undefined){
-                texture = objects[i].material.map;
+                console.log(objects[i]);
+                var texture = objects[i].material.map;
+                if(objects[i].material.side != undefined){
+                    var side = objects[i].material.side;
+                    var phong = new THREE.MeshPhongMaterial({color: color, wireframe: wireframe_bool, map: texture, side: side});
+                }
+                else {
+                    var phong = new THREE.MeshPhongMaterial({color: color, wireframe: wireframe_bool, map: texture});
+                }
             }
-            var phong = new THREE.MeshPhongMaterial({color: color, wireframe: wireframe_bool, map: texture});
+            else {
+                var phong = new THREE.MeshPhongMaterial({color: color, wireframe: wireframe_bool});
+            }
             objects[i].material = phong;
         }
         break;
@@ -887,27 +917,43 @@ function onKeyDown(e) {
     case 101: //e
         for(var i = 0; i < objects.length; i++){
             var color = objects[i].material.color;
-            var texture = undefined;
             if (objects[i].material.map != undefined){
-                texture = objects[i].material.map;
+                var texture = objects[i].material.map;
+                if(objects[i].material.side != undefined){
+                    var side = objects[i].material.side;
+                    var basic = new THREE.MeshToonMaterial({color: color, wireframe: wireframe_bool, map: texture, side: side});
+                }
+                else {
+                    var basic = new THREE.MeshToonMaterial({color: color, wireframe: wireframe_bool, map: texture});
+                }
             }
-            var basic = new THREE.MeshToonMaterial({color: color, wireframe: wireframe_bool, map: texture});
+            else {
+                var basic = new THREE.MeshToonMaterial({color: color, wireframe: wireframe_bool});
+            }
             objects[i].material = basic;
         }
         break;
         
-        case 82: //R
-        case 114: //r
-            for(var i = 0; i < objects.length; i++){
-                var color = objects[i].material.color;
-                var texture = undefined;
-                if (objects[i].material.map != undefined){
-                    texture = objects[i].material.map;
+    case 82: //R
+    case 114: //r
+        for(var i = 0; i < objects.length; i++){
+            var color = objects[i].material.color;
+            if (objects[i].material.map != undefined){
+                var texture = objects[i].material.map;
+                if(objects[i].material.side != undefined){
+                    var side = objects[i].material.side;
+                    var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture, side: side});
                 }
-                var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture});
-                objects[i].material = basic;
+                else {
+                    var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool, map: texture});
+                }
             }
-            break;
+            else {
+                var basic = new THREE.MeshBasicMaterial({color: color, wireframe: wireframe_bool});
+            }
+            objects[i].material = basic;
+        }
+        break;
 
 
     case 76: //L
